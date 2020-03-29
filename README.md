@@ -1,7 +1,10 @@
 # Santa Fe COVID API
 
 Based on handed scraped data on goverment reports: https://docs.google.com/spreadsheets/d/19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU
-All the time series are cumulatives (not new reported cases). 'Sospechosos' could decrease because some ca
+
+All the time series are cumulatives (not new reported cases). And there is a smart design decision under that: if we have cumulative confirmed cases, we don't have to read all the entries, only with the frequentcy we are interested in (imagine weekly analysis).
+
+'Sospechosos' could decrease because some cases can move to 'Confirmados' o 'Descartados'.
 
 # Non-Python users
 
