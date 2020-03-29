@@ -1,6 +1,7 @@
 # Santa Fe COVID API
 
 Based on handed scraped data on goverment reports: https://docs.google.com/spreadsheets/d/19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU
+All the time series are cumulatives (not new reported cases). 'Sospechosos' could decrease because some ca
 
 # Non-Python users
 
