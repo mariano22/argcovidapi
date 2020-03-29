@@ -2,24 +2,24 @@
 Python API for working with Santa Fe (Argentina) COVID data reported
 
 DataTypes exported:
-        - CityInfo, COVIDStats namedtuples
-        - SantaFeAPI class
+- CityInfo, COVIDStats namedtuples
+        > SantaFeAPI class
 
 API methods:
-        - api.get_stats(date)
-        - api.get_cities_stats(date)
-        - api.get_departments_stats(date)
+- api.get_stats(date)
+- api.get_cities_stats(date)
+- api.get_departments_stats(date)
 API public properties:
-        - api.df_info : pandas.DataFrame
-        - api.df_confirmados : pandas.DataFrame
-        - api.df_descartados : pandas.DataFrame
-        - api.df_sospechosos : pandas.DataFrame
-        - api.city_information : Dict[CityName, CityInfo]
+- api.df_info : pandas.DataFrame
+- api.df_confirmados : pandas.DataFrame
+- api.df_descartados : pandas.DataFrame
+- api.df_sospechosos : pandas.DataFrame
+- api.city_information : Dict[CityName, CityInfo]
     
 Exported functions:
-        - is_city(str)
-        - is_deparment(str)
-        - normalize_str(str)
+- is_city(str)
+- is_deparment(str)
+- normalize_str(str)
 
 ### Important data types.
 
@@ -86,7 +86,7 @@ api.get_cities_stats('26/3/2020')[:3]
 
 
 
-### get_stats : Date -> [ COVIDStats ] of only departments
+### <code>get_stats : Date -> [ COVIDStats ] of only departments
 
 
 ```python
@@ -114,7 +114,7 @@ api.get_departments_stats('26/3/2020')[:10]
 
 
 ### Exported DataFrames
-Also exports 3 pandas.DataFrame df_confirmados, df_descartados, df_sospechosos.
+Also exports 3 pandas.DataFrame <code>df_confirmados, df_descartados, df_sospechosos</code>.
 With the content of Google Drive base 'Confirmados', 'Descartados', 'Sospechos'.
 Values are cumulative. City names are normalized using normalize_str function.
 
@@ -140,23 +140,18 @@ API exports a DataFrame with 'Info' sheet (information about each city).
 api.df_info.head(3)
 ```
 
-API exports a Dict[CityName, CityInfo]
+API exports a <code>Dict[CityName, CityInfo]</code>
 
 
 ```python
 list(api.city_information.items())[:3]
 ```
 
-Uses is_city(str) is_deparment(str) method to check if a place name is city or deparment.
+Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or deparment.
 
 
 ```python
 ciudades = api.df_confirmados[ api.df_confirmados.index.map(is_city)  ]['26/3/2020']
 ciudades = ciudades[ciudades>0]
 ciudades.plot.bar()
-```
-
-
-```python
-
 ```
