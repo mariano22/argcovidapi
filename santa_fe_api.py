@@ -1,38 +1,19 @@
 import numpy as np
 import pandas as pd
 import math
-import unicodedata
 import collections
 import os
-import requests
+from common import *
 
 def _download_google_tables():
     """ Download sheets that feed the api from public drive:
     https://docs.google.com/spreadsheets/d/1RKS1coG0wkbqOmBi9xuguNeAdZKQZbQ6KGyc2yrQ8FY/edit#gid=0 """
-    print('Download from google drive...')
-    DRIVE_KEY = '19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU'
-    DRIVE_UID = [ ('Confirmados.csv', '1708488423'),
-                  ('Sospechosos.csv','973861334'),
-                  ('Descartados.csv','1850124287'),
-                  ('Info.csv','743139306') ]
-    URL_TEMPLATE = 'https://docs.google.com/spreadsheet/ccc?key={}&output=csv&gid={}'
-
-    for csv_filename, uid in DRIVE_UID:
-        response = requests.get(URL_TEMPLATE.format(DRIVE_KEY, uid))
-        assert response.status_code == 200,\
-            'Wrong status code at dowloading from drive {}'.format(csv_filename)
-        f = open(csv_filename, "wb")
-        f.write(response.content)
-        f.close()
-
-def normalize_str(s):
-    """ Function for name normalization (handle áéíóú). """
-    return unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode("ascii").upper()
-
-def _read_table(csv_filepath):
-    df = pd.read_csv(csv_filepath).fillna(0)
-    df['PLACE'] = df['PLACE'].map(normalize_str)
-    return df.set_index('PLACE')
+    drive_key = '19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU'
+    drive_uid_sheets = [ ('fromdrive_SantaFe_Confirmados.csv', '1708488423'),
+                         ('fromdrive_SantaFe_Sospechosos.csv','973861334'),
+                         ('fromdrive_SantaFe_Descartados.csv','1850124287'),
+                         ('fromdrive_SantaFe_Info.csv','743139306') ]
+    download_google_tables(drive_key, drive_uid_sheets)
 
 CityInfo = collections.namedtuple('CityInfo', ['latitud','longitud','departamento'])
 COVIDStats = collections.namedtuple('COVIDStats', ['date', 'place_name', 'confirmados','descartados','sospechosos'])
@@ -54,10 +35,10 @@ class SantaFeAPI:
         _download_google_tables()
 
         # Load CSV's
-        self.df_info = _read_table(os.path.join(self.work_dir, "Info.csv"))
-        self.df_confirmados = _read_table(os.path.join(self.work_dir, 'Confirmados.csv'))
-        self.df_descartados = _read_table(os.path.join(self.work_dir, 'Descartados.csv'))
-        self.df_sospechosos = _read_table(os.path.join(self.work_dir, 'Sospechosos.csv'))
+        self.df_info = read_place_table(os.path.join(self.work_dir, "fromdrive_SantaFe_Info.csv"))
+        self.df_confirmados = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Confirmados.csv'))
+        self.df_descartados = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Descartados.csv'))
+        self.df_sospechosos = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Sospechosos.csv'))
 
         # Check all places have 'Info' entry.
         sanity_ok = True
@@ -100,8 +81,11 @@ if __name__ == '__main__':
     from IPython.display import IFrame
     import gmplot
     api = SantaFeAPI('./')
-    date = '26/3 19:00'
+    date = '26/3/2020'
     ciudades = api.df_confirmados[ api.df_confirmados.index.map(is_city)  ][date]
     ciudades = ciudades[ciudades>0]
-    ciudades.plot.bar()
-    plt.savefig('confirmados.png', bbox_inches = 'tight')
+    if not ciudades.empty:
+        ciudades.plot.bar()
+        plt.savefig('confirmados.png', bbox_inches = 'tight')
+    else:
+        print('No confirmed cases at {}'.format(date))

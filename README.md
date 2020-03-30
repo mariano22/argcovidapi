@@ -1,17 +1,123 @@
-# Santa Fe COVID API
+# Argentina and Santa Fe COVID API
 
-Based on handed scraped data on goverment reports: https://docs.google.com/spreadsheets/d/19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU
+Based on handed scraped data on goverment reports:
+- Argentina: https://docs.google.com/spreadsheets/d/1xDi1RIXFA_cWaKJ-WEBRuFSrHwlFr7308NtQhoBLEsA
+- Santa Fe: https://docs.google.com/spreadsheets/d/19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU
 
-All the time series are cumulatives (not new reported cases). And there is a smart design decision under that: if we have cumulative confirmed cases, we don't have to read all the entries, only with the frequentcy we are interested in (imagine weekly analysis).
+Santa Fe reports are cumulative. National reports shows new daily cases.
+
+We decided to work with cumulatives time series. There is a smart design decision behind that: if we have cumulative confirmed cases, we don't have to read all the entries, only with the frequentcy we are interested in (imagine weekly analysis).
 
 'Sospechosos' could decrease because some cases can move to 'Confirmados' o 'Descartados'.
 
 # Non-Python users
 
-For non python users <code>Confirmados_{DATE}.csv</code> <code>Sospechosos_{DATE}.csv</code> <code>Descartados_{DATE}.csv</code> <code>Info_{DATE}.csv </code> are generated periodically to be read.
+For non python users csv's are generated periodically to be parsed and used. All with cumulative time series.
+- For Santa Fe:
+
+<code>SantaFe_Confirmados.csv</code> <code>SantaFe_Sospechosos.csv</code> <code>SantaFe_Descartados.csv</code> <code>SantaFe_Info.csv </code> 
+
+- For Argentina:
+
+<code>Argentina_Tests.csv</code> <code>Argentina_Confirmados.csv</code> <code>Argentina_Fallecidos.csv</code>
+
+Check last update time on <code>last_update.txt</code>
 
 
-## API
+## Argentina API
+
+Python API for working with Argentina COVID data reported.
+
+DataTypes exported:
+- COVIDStats namedtuple
+- ArgentinaAPI class
+
+API methods:
+- api.get_stats(date)
+API public properties:
+- api.df_test : pandas.DataFrame
+- api.df_confirmados : pandas.DataFrame
+- api.df_fallecidos : pandas.DataFrame
+
+### Important data types.
+
+
+```python
+from argentina_api import *
+print('COVIDStats namedtuple:', COVIDStats._fields)
+```
+
+    COVIDStats namedtuple: ('date', 'place_name', 'confirmados', 'fallecidos')
+
+
+## Create api instance passing the working directory 
+When load the data the API tells if there are no entries in 'Info' sheet for certain city.
+
+
+```python
+api = ArgentinaAPI('./')
+```
+
+    Download from google drive...
+
+
+### <code>get_stats : Date -> [ COVIDStats ]</code> of all provinces
+
+
+```python
+api.get_stats('26/3/2020')[:3]
+```
+
+
+    ---------------------------------------------------------------------------
+
+    NameError                                 Traceback (most recent call last)
+
+    <ipython-input-13-bef93f65c1f4> in <module>
+    ----> 1 api.get_stats('26/3/2020')[:3]
+    
+
+    ~/Escritorio/corona/map/santafecovidapi/argentina_api.py in get_stats(self, date)
+         44         for province_name, r in self.df_confirmados.iterrows():
+         45             result.append(COVIDStats(date        = date,
+    ---> 46                                      place_name  = city_name,
+         47                                      confirmados = self.df_confirmados[date].get(province_name,0),
+         48                                      fallecidos = self.df_fallecidos[date].get(province_name,0)))
+
+
+    NameError: name 'city_name' is not defined
+
+
+### Exported DataFrames
+Also exports 3 pandas.DataFrame <code>df_confirmados, df_fallecidos, df_test</code>.
+
+With the content of Google Drive 'Confirmados_Diff', 'Fallecidos_Diff', 'Test_Diff' but with cumulative values. Provinces names are normalized using normalize_str function.
+
+
+```python
+api.df_confirmados.head(3)
+```
+
+
+```python
+api.df_fallecidos.head(3)
+```
+
+
+```python
+api.df_test.head(3)
+```
+
+### Example of use
+
+
+```python
+provinces = api.df_confirmados['26/3/2020']
+provinces = provinces[provinces>0]
+provinces.plot.bar()
+```
+
+## Santa Fe API
 
 Python API for working with Santa Fe (Argentina) COVID data reported.
 
@@ -64,6 +170,7 @@ api = SantaFeAPI('./', strict_sanity = False)
     Not info entry for: DESVIO ARIJON
     Not info entry for: CALCHAQUI
     Not info entry for: LAS TOSCAS
+    Not info entry for: ESPERANZA
     Not info entry for: DESVIO ARIJON
     Not info entry for: CALCHAQUI
 
@@ -112,16 +219,16 @@ api.get_departments_stats('26/3/2020')[:10]
 
     NotImplementedError                       Traceback (most recent call last)
 
-    <ipython-input-57-dfabae7695bd> in <module>
+    <ipython-input-18-dfabae7695bd> in <module>
     ----> 1 api.get_departments_stats('26/3/2020')[:10]
     
 
     ~/Escritorio/corona/map/santafecovidapi/santa_fe_api.py in get_departments_stats(self, date)
-         93     def get_departments_stats(self,date):
-         94         """ Return a [ COVIDStats ] for the deparments only. """
-    ---> 95         raise NotImplementedError
-         96         return [ s  for s in self.get_stats(date) if is_deparment(s.place_name) ]
-         97 
+         74     def get_departments_stats(self,date):
+         75         """ Return a [ COVIDStats ] for the deparments only. """
+    ---> 76         raise NotImplementedError
+         77         return [ s  for s in self.get_stats(date) if is_deparment(s.place_name) ]
+         78 
 
 
     NotImplementedError: 
@@ -140,365 +247,14 @@ api.df_confirmados.head(3)
 ```
 
 
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>14/03</th>
-      <th>15/03</th>
-      <th>16/03</th>
-      <th>17/3 18:00</th>
-      <th>18/3 18:00</th>
-      <th>19/03</th>
-      <th>20/03</th>
-      <th>21/03</th>
-      <th>22/03</th>
-      <th>23/3/2020</th>
-      <th>24/3/2020</th>
-      <th>25/3/2020</th>
-      <th>26/3/2020</th>
-      <th>27/3/2020</th>
-      <th>28/3/2020</th>
-    </tr>
-    <tr>
-      <th>PLACE</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>TOTAL</th>
-      <td>0.0</td>
-      <td>1.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>15.0</td>
-      <td>20.0</td>
-      <td>39.0</td>
-      <td>55.0</td>
-      <td>64.0</td>
-      <td>77.0</td>
-    </tr>
-    <tr>
-      <th>D_BELGRANO</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>ARMSTRONG</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
 ```python
 api.df_descartados.head(3)
 ```
 
 
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>14/03</th>
-      <th>15/03</th>
-      <th>16/03</th>
-      <th>17/3/2020</th>
-      <th>18/3/2020</th>
-      <th>19/03</th>
-      <th>20/03</th>
-      <th>21/03</th>
-      <th>22/03</th>
-      <th>23/3/2020</th>
-      <th>24/3/2020</th>
-      <th>25/3/2020</th>
-      <th>26/3/2020</th>
-      <th>27/3/2020</th>
-      <th>28/3/2020</th>
-    </tr>
-    <tr>
-      <th>PLACE</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>TOTAL</th>
-      <td>18.0</td>
-      <td>21.0</td>
-      <td>22.0</td>
-      <td>25.0</td>
-      <td>28.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>64.0</td>
-      <td>95.0</td>
-      <td>120.0</td>
-      <td>161.0</td>
-      <td>214.0</td>
-      <td>280.0</td>
-    </tr>
-    <tr>
-      <th>BELGRANO</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>ARMSTRONG</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>1.0</td>
-      <td>1.0</td>
-      <td>1.0</td>
-      <td>1.0</td>
-      <td>1.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-
 ```python
 api.df_sospechosos.head(3)
 ```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>14/03</th>
-      <th>15/03</th>
-      <th>16/03</th>
-      <th>17/3/2020</th>
-      <th>18/3/2020</th>
-      <th>19/03</th>
-      <th>20/03</th>
-      <th>21/03</th>
-      <th>22/03</th>
-      <th>23/3/2020</th>
-      <th>24/3/2020</th>
-      <th>25/3/2020</th>
-      <th>26/3/2020</th>
-      <th>27/3/2020</th>
-      <th>28/3/2020</th>
-    </tr>
-    <tr>
-      <th>PLACE</th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>TOTAL</th>
-      <td>6.0</td>
-      <td>10.0</td>
-      <td>14.0</td>
-      <td>20.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>89.0</td>
-      <td>70.0</td>
-      <td>72.0</td>
-      <td>89.0</td>
-      <td>105.0</td>
-      <td>87.0</td>
-    </tr>
-    <tr>
-      <th>BELGRANO</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>ARMSTRONG</th>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-      <td>0.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
 
 API exports a DataFrame with 'Info' sheet (information about each city).
 
@@ -506,63 +262,6 @@ API exports a DataFrame with 'Info' sheet (information about each city).
 ```python
 api.df_info.head(3)
 ```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>LATITUD</th>
-      <th>LONGITUD</th>
-      <th>DEPARTAMENTO</th>
-    </tr>
-    <tr>
-      <th>PLACE</th>
-      <th></th>
-      <th></th>
-      <th></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>VENADO TUERTO</th>
-      <td>-33.742717</td>
-      <td>-61.968892</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>CARMEN</th>
-      <td>-33.732215</td>
-      <td>-61.761412</td>
-      <td>0.0</td>
-    </tr>
-    <tr>
-      <th>RUFINO</th>
-      <td>-34.264474</td>
-      <td>-62.711107</td>
-      <td>0.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
 
 API exports a <code>Dict[CityName, CityInfo]</code>
 
@@ -583,6 +282,8 @@ list(api.city_information.items())[:3]
 
 
 
+### Example of use
+
 Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or deparment.
 
 
@@ -595,10 +296,10 @@ ciudades.plot.bar()
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x7f08ad80a040>
+    <matplotlib.axes._subplots.AxesSubplot at 0x7f8c2dbe82e0>
 
 
 
 
-![png](README_files/README_20_1.png)
+![png](README_files/README_34_1.png)
 
