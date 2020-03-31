@@ -12,16 +12,16 @@ We decided to work with cumulatives time series. There is a smart design decisio
 
 # Non-Python users
 
-For non python users csv's are generated periodically to be parsed and used. All with cumulative time series.
+For non python users csv's are generated periodically to be parsed and used (see <code>./csv/ folder</code>). All with cumulative time series.
 - For Santa Fe:
 
-<code>SantaFe_Confirmados.csv</code> <code>SantaFe_Sospechosos.csv</code> <code>SantaFe_Descartados.csv</code> <code>SantaFe_Info.csv </code> 
+<code>csv/SantaFe_Confirmados.csv</code> <code>csv/SantaFe_Sospechosos.csv</code> <code>SantaFe_Descartados.csv</code> <code>csv/SantaFe_Info.csv </code> 
 
 - For Argentina:
 
-<code>Argentina_Tests.csv</code> <code>Argentina_Confirmados.csv</code> <code>Argentina_Fallecidos.csv</code>
+<code>csv/Argentina_Tests.csv</code> <code>csv/Argentina_Confirmados.csv</code> <code>csv/Argentina_Fallecidos.csv</code>
 
-Check last update time on <code>last_update.txt</code>
+Check last update time on <code>csv/last_update.txt</code>
 
 
 ## Argentina API

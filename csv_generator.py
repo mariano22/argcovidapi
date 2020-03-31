@@ -4,6 +4,8 @@ from argentina_api import *
 import datetime
 import os
 
+CSV_FOLDER = './csvs'
+
 if __name__ == '__main__':
     # Erase old csv's.
     for fn in [ 'SantaFe_Confirmados.csv', 'SantaFe_Descartados.csv',
@@ -14,10 +16,9 @@ if __name__ == '__main__':
             os.remove(fn)
     # Save time of last update
     timestamp = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
-    with open('last_update.txt', 'w') as f:
+    with open(os.path.join(CSV_FOLDER,'last_update.txt'), 'w') as f:
         f.write('Last update on: {}'.format(timestamp))
     # Generate Santa Fe csv's
-    CSV_FOLDER = './csvs'
     santa_fe_api = SantaFeAPI('./', strict_sanity = False)
     santa_fe_api.df_info.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Info.csv')
     santa_fe_api.df_confirmados.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Confirmados.csv'))
