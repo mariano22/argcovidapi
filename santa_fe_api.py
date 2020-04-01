@@ -35,7 +35,7 @@ def complete_deparments(df,to_department):
     for place_name, _ in df.iterrows():
         if is_deparment(place_name):
             df.loc[place_name] = grouped_df.loc[place_name]
-    return df
+    return df.drop(columns=['DEPARTMENT'])
 
 class SantaFeAPI:
     """" API for programatically get info about COVID situation at Santa Fe. """
