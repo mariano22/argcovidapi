@@ -20,7 +20,7 @@ if __name__ == '__main__':
         f.write('Last update on: {}'.format(timestamp))
     # Generate Santa Fe csv's
     santa_fe_api = SantaFeAPI('./', strict_sanity = False)
-    santa_fe_api.df_info.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Info.csv')
+    santa_fe_api.df_info.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Info.csv'))
     santa_fe_api.df_confirmados.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Confirmados.csv'))
     santa_fe_api.df_descartados.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Descartados.csv'))
     santa_fe_api.df_sospechosos.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Sospechosos.csv'))
