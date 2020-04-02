@@ -52,11 +52,11 @@ class SantaFeAPI:
         self.df_sospechosos = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Sospechosos.csv'))
 
         # Get cities name
-        all_names = list(self.df_confirmados.index) +\
-                    list(self.df_descartados.index) +\
-                    list(self.df_sospechosos.index)
-        self.cities = set(n for n in all_names if is_city(n))
-        self.departments = set(n for n in all_names if is_deparment(n))
+        self.all_names = set( list(self.df_confirmados.index) +\
+                              list(self.df_descartados.index) +\
+                              list(self.df_sospechosos.index) )
+        self.cities = set(n for n in self.all_names if is_city(n))
+        self.departments = set(n for n in self.all_names if is_deparment(n))
 
         # Get the deperment of each city from 'Confirmados' table
         to_department = dict()
@@ -92,7 +92,7 @@ class SantaFeAPI:
     def get_stats(self,date):
         """ Return a [ COVIDStats ] for the considered date. """
         result = []
-        for city_name, r in self.df_info.iterrows():
+        for city_name in self.all_names:
             result.append(COVIDStats(date        = date,
                                      place_name  = city_name,
                                      confirmados = self.df_confirmados[date].get(city_name,0),
