@@ -15,7 +15,7 @@ We decided to work with cumulatives time series. There is a smart design decisio
 For non python users csv's are generated periodically to be parsed and used (see <code>./csv/ folder</code>). All with cumulative time series.
 - For Santa Fe:
 
-<code>csv/SantaFe_Confirmados.csv</code> <code>csv/SantaFe_Sospechosos.csv</code> <code>SantaFe_Descartados.csv</code> <code>csv/SantaFe_Info.csv </code> 
+<code>csv/SantaFe_Confirmados.csv</code> <code>csv/SantaFe_Sospechosos.csv</code> <code>SantaFe_Descartados.csv</code>
 
 - For Argentina:
 
@@ -73,14 +73,14 @@ api.get_stats('26/3/2020')[:3]
 
     NameError                                 Traceback (most recent call last)
 
-    <ipython-input-13-bef93f65c1f4> in <module>
+    <ipython-input-6-bef93f65c1f4> in <module>
     ----> 1 api.get_stats('26/3/2020')[:3]
     
 
-    ~/Escritorio/corona/map/santafecovidapi/argentina_api.py in get_stats(self, date)
+    ~/Escritorio/covid/argcovidapi/argentina_api.py in get_stats(self, date)
          44         for province_name, r in self.df_confirmados.iterrows():
          45             result.append(COVIDStats(date        = date,
-    ---> 46                                      place_name  = city_name,
+    ---> 46                                      place_name  = province_name,
          47                                      confirmados = self.df_confirmados[date].get(province_name,0),
          48                                      fallecidos = self.df_fallecidos[date].get(province_name,0)))
 
@@ -146,7 +146,6 @@ Exported functions:
 
 ```python
 from santa_fe_api import *
-print('CityInfo namedtuple:', CityInfo._fields)
 print('COVIDStats namedtuple:', COVIDStats._fields)
 ```
 
@@ -256,32 +255,6 @@ api.df_descartados.head(3)
 api.df_sospechosos.head(3)
 ```
 
-API exports a DataFrame with 'Info' sheet (information about each city).
-
-
-```python
-api.df_info.head(3)
-```
-
-API exports a <code>Dict[CityName, CityInfo]</code>
-
-
-```python
-list(api.city_information.items())[:3]
-```
-
-
-
-
-    [('VENADO TUERTO',
-      CityInfo(latitud=-33.742717, longitud=-61.968892000000004, departamento=0.0)),
-     ('CARMEN',
-      CityInfo(latitud=-33.732215000000004, longitud=-61.761412, departamento=0.0)),
-     ('RUFINO',
-      CityInfo(latitud=-34.264474, longitud=-62.711107, departamento=0.0))]
-
-
-
 ### Example of use
 
 Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or deparment.
@@ -301,5 +274,5 @@ ciudades.plot.bar()
 
 
 
-![png](README_files/README_34_1.png)
+![png](README_files/README_30_1.png)
 

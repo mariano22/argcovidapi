@@ -43,7 +43,7 @@ class ArgentinaAPI:
         result = []
         for province_name, r in self.df_confirmados.iterrows():
             result.append(COVIDStats(date        = date,
-                                     place_name  = city_name,
+                                     place_name  = province_name,
                                      confirmados = self.df_confirmados[date].get(province_name,0),
                                      fallecidos = self.df_fallecidos[date].get(province_name,0)))
         return result

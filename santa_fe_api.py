@@ -11,11 +11,9 @@ def _download_google_tables():
     drive_key = '19aa5sqdsj3nYmBqllPXvgj72cvx63SzB2Hx8B02vMwU'
     drive_uid_sheets = [ ('fromdrive_SantaFe_Confirmados.csv', '1708488423'),
                          ('fromdrive_SantaFe_Sospechosos.csv','973861334'),
-                         ('fromdrive_SantaFe_Descartados.csv','1850124287'),
-                         ('fromdrive_SantaFe_Info.csv','743139306') ]
+                         ('fromdrive_SantaFe_Descartados.csv','1850124287') ]
     download_google_tables(drive_key, drive_uid_sheets)
 
-CityInfo = collections.namedtuple('CityInfo', ['latitud','longitud','departamento'])
 COVIDStats = collections.namedtuple('COVIDStats', ['date', 'place_name', 'confirmados','descartados','sospechosos'])
 
 def is_city(place_name):
@@ -46,7 +44,6 @@ class SantaFeAPI:
         _download_google_tables()
 
         # Load CSV's
-        self.df_info = read_place_table(os.path.join(self.work_dir, "fromdrive_SantaFe_Info.csv"))
         self.df_confirmados = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Confirmados.csv'))
         self.df_descartados = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Descartados.csv'))
         self.df_sospechosos = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_Sospechosos.csv'))
@@ -69,25 +66,6 @@ class SantaFeAPI:
         self.df_confirmados = complete_deparments(self.df_confirmados,to_department)
         self.df_descartados = complete_deparments(self.df_descartados,to_department)
         self.df_sospechosos = complete_deparments(self.df_sospechosos,to_department)
-
-        # Check all places have 'Info' entry.
-        sanity_ok = True
-        for df in [self.df_confirmados, self.df_descartados, self.df_sospechosos]:
-            for city_name, _ in df.iterrows():
-                if city_name=='TOTAL':
-                    continue
-                if city_name not in self.df_info.index:
-                    sanity_ok = False
-                    print('Not info entry for: {}'.format(city_name))
-        if strict_sanity:
-            assert sanity_ok
-
-        # Build city information dict
-        self.city_information = { city_name:
-            CityInfo(latitud = self.df_info['LATITUD'].get(city_name,0),
-                     longitud = self.df_info['LONGITUD'].get(city_name,0),
-                     departamento = to_department[city_name])
-                        for city_name in self.cities }
 
     def get_stats(self,date):
         """ Return a [ COVIDStats ] for the considered date. """

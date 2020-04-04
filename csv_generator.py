@@ -9,7 +9,7 @@ CSV_FOLDER = './csvs'
 if __name__ == '__main__':
     # Erase old csv's.
     for fn in [ 'SantaFe_Confirmados.csv', 'SantaFe_Descartados.csv',
-                'SantaFe_Sospechosos.csv', 'SantaFe_Info.csv',
+                'SantaFe_Sospechosos.csv',
                 'Argentina_Tests.csv', 'Argentina_Confirmados.csv',
                 'Argentina_Fallecidos.csv' ]:
         if os.path.exists(fn):
@@ -20,7 +20,6 @@ if __name__ == '__main__':
         f.write('Last update on: {}'.format(timestamp))
     # Generate Santa Fe csv's
     santa_fe_api = SantaFeAPI('./', strict_sanity = False)
-    santa_fe_api.df_info.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Info.csv'))
     santa_fe_api.df_confirmados.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Confirmados.csv'))
     santa_fe_api.df_descartados.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Descartados.csv'))
     santa_fe_api.df_sospechosos.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Sospechosos.csv'))
