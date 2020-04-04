@@ -10,8 +10,7 @@ if __name__ == '__main__':
     # Erase old csv's.
     for fn in [ 'SantaFe_Confirmados.csv', 'SantaFe_Descartados.csv',
                 'SantaFe_Sospechosos.csv',
-                'Argentina_Tests.csv', 'Argentina_Confirmados.csv',
-                'Argentina_Fallecidos.csv' ]:
+                'Argentina_Provinces.csv' ]:
         if os.path.exists(fn):
             os.remove(fn)
     # Save time of last update
@@ -25,6 +24,4 @@ if __name__ == '__main__':
     santa_fe_api.df_sospechosos.to_csv(os.path.join(CSV_FOLDER,'SantaFe_Sospechosos.csv'))
     # Generate Argentina csv's
     argentina_api = ArgentinaAPI('./')
-    argentina_api.df_test.to_csv(os.path.join(CSV_FOLDER,'Argentina_Tests.csv'))
-    argentina_api.df_confirmados.to_csv(os.path.join(CSV_FOLDER,'Argentina_Confirmados.csv'))
-    argentina_api.df_fallecidos.to_csv(os.path.join(CSV_FOLDER,'Argentina_Fallecidos.csv'))
+    argentina_api.df_provinces.to_csv(os.path.join(CSV_FOLDER,'Argentina_Provinces.csv'))

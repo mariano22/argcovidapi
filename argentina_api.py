@@ -5,47 +5,29 @@ import unicodedata
 import collections
 import os
 from common import *
+from argentina_province_parse import *
 
-def _download_google_tables():
-    """ Download sheets that feed the api from public drive:
-    https://docs.google.com/spreadsheets/d/1xDi1RIXFA_cWaKJ-WEBRuFSrHwlFr7308NtQhoBLEsA/edit#gid=0 """
-    drive_key = '1xDi1RIXFA_cWaKJ-WEBRuFSrHwlFr7308NtQhoBLEsA'
-    drive_uid_sheets = [ ('fromdrive_Argentina_Test_Diff.csv', '787490104'),
-                         ('fromdrive_Argentina_Confirmados_Diff.csv','1219039431'),
-                         ('fromdrive_Argentina_Fallecidos_Diff.csv','219440205') ]
-    download_google_tables(drive_key, drive_uid_sheets)
-
-COVIDStats = collections.namedtuple('COVIDStats', ['date', 'place_name', 'confirmados','fallecidos'])
+COVIDStats = collections.namedtuple('COVIDStats', ['date', 'place_name', 'confirmados','muertos', 'recuperados', 'activos'])
 
 class ArgentinaAPI:
     """" API for programatically get info about COVID situation at Argentina provinces. """
     def __init__(self,work_dir):
         self.work_dir = work_dir
 
-        # Download files from Google Drive COVIDSantaFe Dashboard
-        _download_google_tables()
-
-        # Load CSV's and pass to cumulative values
-        self.df_test = pd.read_csv(os.path.join(self.work_dir, 'fromdrive_Argentina_Test_Diff.csv')).fillna(0).set_index('FECHA')
-        for c in self.df_test.columns:
-            self.df_test[c] = self.df_test[c].cumsum()
-
-        self.df_confirmados = read_place_table(os.path.join(self.work_dir, 'fromdrive_Argentina_Confirmados_Diff.csv'))
-        for province,_ in self.df_confirmados.iterrows():
-            self.df_confirmados.loc[province] = self.df_confirmados.loc[province].cumsum()
-
-        self.df_fallecidos = read_place_table(os.path.join(self.work_dir, 'fromdrive_Argentina_Fallecidos_Diff.csv'))
-        for province,_ in self.df_fallecidos.iterrows():
-            self.df_fallecidos.loc[province] = self.df_fallecidos.loc[province].cumsum()
+        # Download files from Google Drive
+        self.df_provinces = download_province_table()
+        self.provinces = list(self.df_provinces.loc['CONFIRMADOS'].index)
 
     def get_stats(self,date):
         """ Return a [ COVIDStats ] for the considered date for all provinces """
         result = []
-        for province_name, r in self.df_confirmados.iterrows():
+        for province_name in self.provinces:
             result.append(COVIDStats(date        = date,
                                      place_name  = province_name,
-                                     confirmados = self.df_confirmados[date].get(province_name,0),
-                                     fallecidos = self.df_fallecidos[date].get(province_name,0)))
+                                     confirmados = self.df_provinces.loc['CONFIRMADOS'].loc[province_name][date],
+                                     muertos = self.df_provinces.loc['MUERTOS'].loc[province_name][date],
+                                     recuperados = self.df_provinces.loc['RECUPERADOS'].loc[province_name][date],
+                                     activos = self.df_provinces.loc['ACTIVOS'].loc[province_name][date]))
         return result
 
 if __name__ == '__main__':
