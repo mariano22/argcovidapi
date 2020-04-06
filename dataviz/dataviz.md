@@ -1,0 +1,8 @@
+![confirmados ratio de aumento en 4 dias (Santa Fe).](./confirmados ratio de aumento en 4 dias (Santa Fe)..png)
+![Daily cases CONFIRMADOS Santa Fe departamentos (linear scale)](./Daily cases CONFIRMADOS Santa Fe departamentos (linear scale).png)
+![Daily cases CONFIRMADOS Arg provinces (linear scale)](./Daily cases CONFIRMADOS Arg provinces (linear scale).png)
+![Cumulative cases CONFIRMADOS Arg provinces (linear scale)](./Cumulative cases CONFIRMADOS Arg provinces (linear scale).png)
+![confirmados ratio de aumento en 4 dias (Argentina).](./confirmados ratio de aumento en 4 dias (Argentina)..png)
+![Cumulative cases CONFIRMADOS, Santa Fe departamentos (linear scale)](./Cumulative cases CONFIRMADOS, Santa Fe departamentos (linear scale).png)
+![Cumulative cases CONFIRMADOS, Santa Fe departamentos (log scale)](./Cumulative cases CONFIRMADOS, Santa Fe departamentos (log scale).png)
+![Cumulative cases CONFIRMADOS, Arg provinces (log scale)](./Cumulative cases CONFIRMADOS, Arg provinces (log scale).png)
