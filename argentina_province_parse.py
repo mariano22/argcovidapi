@@ -32,6 +32,7 @@ def download_province_table():
         Preprocess and parse the downloaded table. """
     # Download table
     url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTfinng5SDBH9RSJMHJk28dUlW3VVSuvqaBSGzU-fYRTVLCzOkw1MnY17L2tWsSOppHB96fr21Ykbyv/pub#'
+    print('Downloading Argentinian provinces table from google drive ({})'.format(url))
     TEMPORAL_HTML_FILE = 'fromdrive_per_province.html'
     r = requests.get(url)
     assert r.status_code == 200, 'Wrong status code at dowloading provinces table'
