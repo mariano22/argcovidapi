@@ -23,7 +23,9 @@ def _get_provincia(s):
             'ENTRE RAOS': 'ENTRE RIOS',
             'RAONEGRO': 'RIO NEGRO',
             'SANTIAGO EST': 'SANTIAGO DEL ESTERO',
-            'TIERRA DEL F': 'TIERRA DEL FUEGO'}
+            'TIERRA DEL F': 'TIERRA DEL FUEGO',
+            'RAO NEGRO': 'RIO NEGRO',
+            }
     s = normalize_str(' '.join(s.split()[:-2]))
     return col_map.get(s,s)
 
