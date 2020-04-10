@@ -37,7 +37,7 @@ def complete_deparments(df,to_department):
 
 class SantaFeAPI:
     """" API for programatically get info about COVID situation at Santa Fe. """
-    def __init__(self,work_dir, strict_sanity = False):
+    def __init__(self,work_dir):
         self.work_dir = work_dir
 
         # Download files from Google Drive COVIDSantaFe Dashboard
@@ -56,16 +56,16 @@ class SantaFeAPI:
         self.departments = set(n for n in self.all_names if is_deparment(n))
 
         # Get the deperment of each city from 'Confirmados' table
-        to_department = dict()
+        self.to_department = dict()
         curr_department = ''
         for place_name, _ in self.df_confirmados.iterrows():
             if is_deparment(place_name):
                 curr_department = place_name
-            to_department[place_name] = curr_department
+            self.to_department[place_name] = curr_department
         # Complete deparment rows by summing the cities.
-        self.df_confirmados = complete_deparments(self.df_confirmados,to_department)
-        self.df_descartados = complete_deparments(self.df_descartados,to_department)
-        self.df_sospechosos = complete_deparments(self.df_sospechosos,to_department)
+        self.df_confirmados = complete_deparments(self.df_confirmados,self.to_department)
+        self.df_descartados = complete_deparments(self.df_descartados,self.to_department)
+        self.df_sospechosos = complete_deparments(self.df_sospechosos,self.to_department)
 
     def get_stats(self,date):
         """ Return a [ COVIDStats ] for the considered date. """

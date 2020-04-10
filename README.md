@@ -406,7 +406,7 @@ When load the data the API tells if there are no entries in 'Info' sheet for cer
 
 
 ```python
-api = SantaFeAPI('./', strict_sanity = False)
+api = SantaFeAPI('./')
 ```
 
     Download from google drive...
@@ -934,6 +934,14 @@ api.df_sospechosos.head(3)
 
 
 
+### Exported Dict[CityName, DepartmentName]
+<code>to_department(str)</code> property stores CityName to DepartmentName assignations.
+
+
+```python
+
+```
+
 ### Example of use
 
 Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or deparment.
@@ -953,5 +961,5 @@ ciudades.plot.bar()
 
 
 
-![png](README_files/README_30_1.png)
+![png](README_files/README_32_1.png)
 
