@@ -44,14 +44,18 @@ def complete_deparments_and_total(df):
 
 class SantaFeAPI:
     """" API for programatically get info about COVID situation at Santa Fe. """
-    def __init__(self,work_dir):
+    def __init__(self,work_dir, mock_drive=None):
         self.work_dir = work_dir
 
         # Download files from Google Drive COVIDSantaFe Dashboard
-        _download_google_tables()
+        if not mock_drive:
+            _download_google_tables()
 
         # Load CSV's
-        self.df = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_AllData.csv'))
+        if mock_drive:
+            self.df = read_place_table(mock_drive)
+        else:
+            self.df = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_AllData.csv'))
         self.df = self.df.set_index('TYPE',append=True)
         self.df = self.df.set_index('DEPARTMENT',append=True)
         self.df = self.df.reorder_levels(['TYPE','DEPARTMENT','PLACE'])
