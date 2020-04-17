@@ -3,7 +3,7 @@ name: CSV daily updater
 # Execute daily
 on:
   schedule:
-    - cron: 50 16 * * *
+    - cron: 0 */6 * * *
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -33,5 +33,5 @@ jobs:
         git config --global user.name "mariano22" 
         python csv_generator.py
         git add csvs/*
-        git commit -m "Update csvs"
+        git commit -m "Update csvs automatically"
         git push origin HEAD:master
