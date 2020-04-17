@@ -1,0 +1,6 @@
+numpy==1.17.2
+numpydoc==0.9.1
+pandas==1.0.3
+requests==2.22.0
+unicodecsv==0.14.1
+urllib3==1.24.2
