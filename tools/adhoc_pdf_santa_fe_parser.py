@@ -36,7 +36,7 @@ def _get_number_tuple(numbers):
         res_tuple[0] = numbers[0]
     numbers = numbers[1:]
     if len(numbers)==1:
-        res_tuple[2] = numbers[0]
+        res_tuple[2] = max(0,numbers[0])
     else:
         assert len(numbers)==2
         res_tuple[1] = numbers[0]
@@ -59,6 +59,8 @@ def _extract_values(s):
         return None
     numbers = s[len(s)-suffix_len:]
     numbers = _extract_numbers(numbers)
+    if len(numbers)==0:
+        return [place_name]
     departamento = any([x.islower() for x in place_name])
     return [place_name]+_get_number_tuple(numbers)
 
@@ -87,8 +89,17 @@ def parse_pdf(in_pdf_filepath, out_csv_filepath):
     parse_result = parser.from_file(in_pdf_filepath)
     text = parse_result['content']
     text_list = _extract_table_text(text)
-    data = [ _extract_values(s) for s in text_list ]    
-    data = [ v for v in data if v is not None ]
+    append_place_name = ''
+    data = []
+    for s in text_list:
+        v = _extract_values(s)
+        if v is not None:
+            if len(v)==1:
+                append_place_name += v[0]
+            else:
+                data.append([append_place_name+v[0]]+v[1:])
+                assert len(v)==5
+                append_place_name = ''
     df = pd.DataFrame(data,columns=['Departamento/ Localidad','Confirmados','Descartados','Sospechosos','Total'])
     df['Departamento/ Localidad']=df['Departamento/ Localidad'].apply(_fill_department)
     df.to_csv(out_csv_filepath, index = False)
