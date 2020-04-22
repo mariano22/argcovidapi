@@ -604,7 +604,5 @@ ciudades.plot.bar()
 ![png](README_files/README_30_1.png)
 
 
-
-```python
-
-```
+## Authors
+- Mariano Crosetti | Computer Sciences student @ [Facebook](https://www.facebook.com/mariano.crosetti.3) | [LinkedIn](https://www.linkedin.com/in/mariano-crosetti-0b71a4146/) | [Twitter](https://twitter.com/MarianoCrosetti) | [Github](https://github.com/mariano22/)
