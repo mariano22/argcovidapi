@@ -606,4 +606,4 @@ ciudades.plot.bar()
 
 ## Authors
 - Mariano Crosetti | Computer Sciences student @ [Facebook](https://www.facebook.com/mariano.crosetti.3) | [LinkedIn](https://www.linkedin.com/in/mariano-crosetti-0b71a4146/) | [Twitter](https://twitter.com/MarianoCrosetti) | [Github](https://github.com/mariano22/)
-- Juan Hernandez Ruiz | Civil Engineer Student @ [Facebook](https://www.facebook.com/juan.i.hernandez.754) | [LinkedIn](https://www.linkedin.com/in/juan-hernandez-ruiz/) | [Twitter](https://twitter.com/SirNander) | [Github]
+- Juan Hernandez Ruiz | Civil Engineer Student @ [Facebook](https://www.facebook.com/juan.i.hernandez.754) | [LinkedIn](https://www.linkedin.com/in/juan-hernandez-ruiz/) | [Twitter](https://twitter.com/SirNander)
