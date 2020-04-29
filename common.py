@@ -1,11 +1,16 @@
 import requests
 import pandas as pd
 import unicodedata
+import datetime
+import os
 
-def read_place_table(csv_filepath):
-    df = pd.read_csv(csv_filepath).fillna(0)
-    df['PLACE'] = df['PLACE'].map(normalize_str)
-    return df.set_index('PLACE')
+CSV_FOLDER = './csvs'
+
+def touch_timestamp():
+    # Save time of last update
+    timestamp = datetime.datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
+    with open(os.path.join(CSV_FOLDER,'last_update.txt'), 'w') as f:
+        f.write('Last update on: {}'.format(timestamp))
 
 def normalize_str(s):
     """ Function for name normalization (handle áéíóú). """

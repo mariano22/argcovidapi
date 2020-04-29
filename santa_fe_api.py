@@ -78,18 +78,19 @@ class SantaFeAPI:
     def __init__(self,work_dir, mock_drive=None):
         self.work_dir = work_dir
 
-        # Download files from Google Drive COVIDSantaFe Dashboard
-        if not mock_drive:
-            _download_google_tables()
-
         # Load CSV's
-        if mock_drive:
-            self.df = read_place_table(mock_drive)
+        if mock_drive is not None:
+            if type(mock_drive)==str:
+                self.df = pd.read_csv(mock_drive)
+            else:
+                assert type(mock_drive)==pd.core.frame.DataFrame
+                self.df = mock_drive
         else:
-            self.df = read_place_table(os.path.join(self.work_dir, 'fromdrive_SantaFe_AllData.csv'))
-        self.df = self.df.set_index('TYPE',append=True)
-        self.df = self.df.set_index('DEPARTMENT',append=True)
-        self.df = self.df.reorder_levels(['TYPE','DEPARTMENT','PLACE'])
+            # Download files from Google Drive COVIDSantaFe Dashboard
+            _download_google_tables()
+            self.df = pd.read_csv(os.path.join(self.work_dir, 'fromdrive_SantaFe_AllData.csv'))
+        self.df['PLACE'] = self.df['PLACE'].map(normalize_str)
+        self.df = self.df.fillna(0).set_index(['TYPE','DEPARTMENT','PLACE'])
         TYPE_INDEX, DEPARTMENT_INDEX, PLACE_INDEX = 0, 1, 2
         self.df = self.df.sort_index()
 
