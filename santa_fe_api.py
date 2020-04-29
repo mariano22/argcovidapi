@@ -37,9 +37,9 @@ def complete_deparments_and_total(df):
     for index,_ in df.iterrows():
         type_case, department, place_name = index[TYPE_INDEX], index[DEPARTMENT_INDEX], index[PLACE_INDEX]
         if place_name=='##TOTAL':
-            df.loc[index] = df_totals.loc[type_case]
+            df.loc[type_case].loc[department].loc[place_name] = df_totals.loc[type_case]
         elif is_deparment(place_name):
-            df.loc[index] = df_departments.loc[type_case].loc[department]
+            df.loc[type_case].loc[department].loc[place_name] = df_departments.loc[type_case].loc[department]
     return df
 
 class SantaFeAPI:
