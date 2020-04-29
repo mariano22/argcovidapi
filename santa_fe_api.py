@@ -70,7 +70,7 @@ def name_sanity(df):
     df=_colide_names(df,lambda p : 'DOMINGUEZ' in p or 'CORONEL RODOLFO' in p ,'Coronel Dominguez')
     df=_colide_names(df,lambda p : 'PUERTO' in p and 'SAN MARTIN' in p ,'Puerto San Martin')
     df=_colide_names(df,lambda p : 'VILLA' in p and 'GALVEZ' in p ,'VILLA GOBERNADOR GALVEZ')
-    df=df.set_index(['TYPE','DEPARTMENT','PLACE']).sort_index()
+    df=df.groupby(['TYPE','DEPARTMENT','PLACE']).sum()
     return df
 
 class SantaFeAPI:
