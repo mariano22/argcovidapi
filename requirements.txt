@@ -1,7 +1,8 @@
-numpy==1.17.2
+numpy==1.18.2
 numpydoc==0.9.1
 pandas==1.0.3
 requests==2.22.0
 unicodecsv==0.14.1
 urllib3==1.24.2
 lxml==4.5.0
+bs4==4.8.2
