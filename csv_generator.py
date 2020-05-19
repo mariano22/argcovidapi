@@ -10,8 +10,8 @@ if __name__ == '__main__':
         if os.path.exists(fn):
             os.remove(fn)
     touch_timestamp()
-    # Generate Argentina csv's
-    argentina_api = ArgentinaAPI('./')
-    argentina_api.df_provinces.to_csv(os.path.join(CSV_FOLDER,'Argentina_Provinces.csv'))
+    # DEPRECATED: Generate Argentina csv's
+    # argentina_api = ArgentinaAPI('./')
+    # argentina_api.df_provinces.to_csv(os.path.join(CSV_FOLDER,'Argentina_Provinces.csv'))
     # Download and join data from Santa Fe datos abiertos portal
     santa_fe_datosabiertos_joiner.update_santa_fe()
