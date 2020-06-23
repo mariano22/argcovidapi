@@ -3,6 +3,12 @@ import numpy as np
 import os
 import datetime
 from common import *
+import chardet
+
+FECHA_FIS = 'fecha_inicio_sintomas'
+FECHA_CUIDADO_INTENSIVO = 'fecha_cui_intensivo'
+PROVINCIA_RESIDENCIA = 'residencia_provincia_nombre'
+DEPARTAMENTO_RESIDENCIA = 'residencia_departamento_nombre'
 
 def correct_date(date):
     date_format = '%Y-%m-%d'
@@ -11,21 +17,29 @@ def correct_date(date):
     return date
 
 def get_data_cleared():
-    df = pd.read_csv(DATA_IN_CSV_CASOS_ARG)
+    with open(DATA_IN_CSV_CASOS_ARG, 'rb') as f:
+        result = chardet.detect(b''.join(f.readlines(1000000)))
+    df = pd.read_csv(DATA_IN_CSV_CASOS_ARG,encoding=result['encoding'])
     cols = [
-        'provincia_residencia',
-        'departamento_residencia',
-        'fecha_fis',
+        PROVINCIA_RESIDENCIA,
+        DEPARTAMENTO_RESIDENCIA,
+        FECHA_FIS,
         'fallecido',
         'fecha_fallecimiento',
-        'clasificacion_resumen'
+        'clasificacion_resumen',
+        'cuidado_intensivo',
+        FECHA_CUIDADO_INTENSIVO,
     ]
     df = df[cols]
-    df['fecha_fis']=df['fecha_fis'].apply(correct_date)
+    df[FECHA_FIS]=df[FECHA_FIS].apply(correct_date)
+    df.loc[(df['fallecido']=='SI') & df['fecha_fallecimiento'].isna(),'fecha_fallecimiento'] =  df[FECHA_FIS]
+    df.loc[(df['fallecido']=='SI') & df[FECHA_FIS].isna(),FECHA_FIS] =  df['fecha_fallecimiento']
+    df.loc[(df['cuidado_intensivo']=='SI') & df[FECHA_CUIDADO_INTENSIVO].isna(),FECHA_CUIDADO_INTENSIVO] = df[FECHA_FIS]
     df['fecha_fallecimiento']=df['fecha_fallecimiento'].apply(correct_date)
-    df['provincia_residencia']=df['provincia_residencia'].apply(normalize_str)
-    df['departamento_residencia']=df['departamento_residencia'].apply(normalize_str)
-    df['LOCATION']='ARGENTINA/'+df['provincia_residencia']+'/'+df['departamento_residencia']
+    df[FECHA_CUIDADO_INTENSIVO]=df[FECHA_CUIDADO_INTENSIVO].apply(correct_date)
+    df[PROVINCIA_RESIDENCIA]=df[PROVINCIA_RESIDENCIA].apply(normalize_str)
+    df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(normalize_str)
+    df['LOCATION']='ARGENTINA/'+df[PROVINCIA_RESIDENCIA]+'/'+df[DEPARTAMENTO_RESIDENCIA]
     location_replace_dict = {
       'ARGENTINA/BUENOS AIRES/CORONEL DE MARINA L. ROSALES':
         'ARGENTINA/BUENOS AIRES/CORONEL DE MARINA LEONARDO ROSALES',
@@ -43,27 +57,40 @@ def pivot_time_series(df):
     df = df.pivot_table(index=['LOCATION'], columns='date', values='value')
     return df
 
+def build_ts(df, date_column):
+    df = df[['LOCATION', date_column]].rename(columns={date_column:'date'})
+    assert set(df.columns)=={'LOCATION', 'date'}
+    ts = pivot_time_series(df)
+    ts = ts.cumsum(axis=1)
+    ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
+    ts = add_missing_columns(ts)
+    ts = ts.fillna(0)
+    ts = ts.rename(columns = lambda d : d.strftime(DATE_FORMAT))
+    return ts
+
+def uci_df(df):
+    df_uci = df[(df['cuidado_intensivo']=='SI') & (df['clasificacion_resumen']=='Confirmado')]
+    return build_ts(df_uci, FECHA_CUIDADO_INTENSIVO)
+
 def confirmados_df(df):
     df_confirmados = df[df['clasificacion_resumen']=='Confirmado'].copy()
-    df_confirmados = df_confirmados[['LOCATION', 'fecha_fis']].rename(columns={'fecha_fis':'date'})
-    df_confirmados = pivot_time_series(df_confirmados)
-    df_confirmados = correct_time_series(df_confirmados)
-    return df_confirmados
+    return build_ts(df_confirmados, FECHA_FIS)
 
 def fallecidos_df(df):
     df_fallecidos = df[(~df['fecha_fallecimiento'].isna()) & (df['clasificacion_resumen']=='Confirmado')].copy()
-    df_fallecidos = df_fallecidos[['LOCATION', 'fecha_fallecimiento']].rename(columns={'fecha_fallecimiento':'date'})
-    df_fallecidos = pivot_time_series(df_fallecidos)
-    df_fallecidos = correct_time_series(df_fallecidos)
-    return df_fallecidos
+    return build_ts(df_fallecidos, 'fecha_fallecimiento')
 
 def construct_time_series(df):
-    df_confirmados = confirmados_df(df).reset_index()
-    df_confirmados['TYPE']='CONFIRMADOS'
-    df_fallecidos = fallecidos_df(df).reset_index()
-    df_fallecidos['TYPE']='MUERTOS'
-    df_result = pd.concat([df_confirmados, df_fallecidos],ignore_index=True).set_index(['TYPE', 'LOCATION'])
-    df_result = correct_time_series(df_result)
+    type_and_ts = [ ('CONFIRMADOS', confirmados_df(df)),
+                    ('MUERTOS', fallecidos_df(df)),
+                    ('UCI', uci_df(df)) ]
+    to_concat = []
+    for type, ts in type_and_ts:
+        ts=ts.reset_index()
+        ts['TYPE']=type
+        ts=ts.set_index(['TYPE', 'LOCATION'])
+        to_concat.append(ts)
+    df_result = concat_time_series(to_concat)
     return df_result
 
 def ts_arg():
@@ -75,8 +102,7 @@ def ts_arg():
     assert all(df_cases_provs['LOCATION'].apply(lambda l : l.count('/')==1))
     df_provs = construct_time_series(df_cases_provs)
 
-    df = pd.concat([df_deps,df_provs])
-    df = df.cumsum(axis=1)
+    df = concat_time_series([df_deps,df_provs])
     return df
 
 if __name__ == '__main__':
