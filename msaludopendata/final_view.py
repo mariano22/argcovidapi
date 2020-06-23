@@ -7,6 +7,7 @@ import time_series
 import info_df
 import info_gdf
 from common import *
+from geopy import distance,point
 
 def final_time_series(ts=None):
     if ts is None:
@@ -30,19 +31,42 @@ def add_with_nulls(df,df_info,level_count):
 def save_restricted_map(gdf,df,map_filename):
     gdf[gdf['LOCATION'].apply(lambda l : l in set(df['LOCATION']))].to_file(map_filename, driver='GeoJSON')
 
+def add_min_dist(df):
+    print('Adding MIN_DIST...')
+    df=df.set_index('LOCATION')
+    df=df[~df['LAT'].isna() & ~df['LONG'].isna()]
+    min_dist_data = []
+    for location_1,r_1 in df.iterrows():
+        min_dist_location = ''
+        min_dist = 10000000
+        for location_2,r_2 in df.iterrows():
+            p_1=point.Point(latitude=r_1['LAT'], longitude=r_1['LONG'])
+            p_2=point.Point(latitude=r_2['LAT'], longitude=r_2['LONG'])
+            dist = distance.distance(p_1, p_2).km
+            if location_1!=location_2 and min_dist>dist:
+                min_dist = dist
+                min_dist_location = location_2
+        assert min_dist_location!=''
+        min_dist_data.append(min_dist)
+    df['MIN_DIST'] = pd.Series(index=df.index,data=min_dist_data)
+    return df.reset_index()
+
 def construct_tables():
-    CSV_TEMPLATE = 'data/info_{}.csv'
-    GEOJSON_TEMPLATE = 'data/maps_{}.geojson'
-    LEVEL_MAPS = [ ('countries', 0, False),
-                   ('provinces', 1, True),
+    CSV_TEMPLATE = '/home/marian/Escritorio/covid/saliomapita/data/info_{}.csv'
+    GEOJSON_TEMPLATE = '/home/marian/Escritorio/covid/saliomapita/data/maps_{}.geojson'
+    LEVEL_MAPS = [ ('provinces', 1, True),
                    ('departments', 2, True) ]
-    df = final_time_series()
+    df_arg = final_time_series(time_series.time_series_only_arg())
     for level_name, level_count, add_nulls in LEVEL_MAPS:
-        df_filtered = df[df['LOCATION'].apply(lambda l : l.count('/')==level_count)]
-        if add_nulls:
-            df_filtered = add_with_nulls(df_filtered, info_df.GLOBAL_INFO_DF, level_count)
+        df_filtered = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==level_count)]
+        df_filtered = add_with_nulls(df_filtered, info_df.GLOBAL_INFO_DF, level_count)
+        df_filtered = add_min_dist(df_filtered)
         df_filtered.to_csv(CSV_TEMPLATE.format(level_name),index=False)
         save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df_filtered, GEOJSON_TEMPLATE.format(level_name))
+    df_countries = final_time_series(time_series.time_series_only_countries())
+    df_countries = add_min_dist(df_countries)
+    df_countries.to_csv(CSV_TEMPLATE.format('countries'),index=False)
+    save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df_countries, GEOJSON_TEMPLATE.format('countries'))
 
 if __name__ == '__main__':
     construct_tables()
