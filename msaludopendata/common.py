@@ -4,6 +4,7 @@ import datetime
 import unicodedata
 import math
 
+""" INPUT FILES """
 DATA_IN_GEOJSON_ARG = 'data_in/maps_general.geojson'
 DATA_IN_GEOJSON_WORLD = 'data_in/countries.geojson'
 DATA_IN_CSV_INFO_ARG = 'data_in/info_general.csv'
@@ -11,8 +12,9 @@ DATA_IN_CSV_CONFIRMADOS_US = 'data_in/confirmed_us.csv'
 DATA_IN_CSV_CONFIRMADOS_WORLD ='data_in/confirmed_global.csv'
 DATA_IN_CSV_MUERTOS_US = 'data_in/death_us.csv'
 DATA_IN_CSV_MUERTOS_WORLD = 'data_in/death_global.csv'
-DATA_IN_CSV_CASOS_ARG = 'data_in/covid19casos.csv'
+DATA_IN_CSV_CASOS_ARG = 'data_in/covid19Casos.csv'
 
+""" Use ISO 8601 date format """
 DATE_FORMAT = '%Y-%m-%d'
 
 def normalize_str(s):
@@ -28,8 +30,37 @@ def correct_time_series(df):
                 new_row_data.append(value)
             else:
                 new_row_data.append(new_row_data[-1])
+        #print(df.loc[index])
         df.loc[index]=pd.Series(new_row_data[1:],index=row.index)
     return df
+
+def check_days_consecutive(ts):
+    """ Check i-column is the prior day of (i+1)-column """
+    ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
+    cols = list(ts.columns)
+    for i in range(1,len(cols)):
+        assert cols[i]-cols[i-1]==datetime.timedelta(days=1)
+
+def add_missing_columns(ts):
+    time_range = pd.date_range(ts.columns.min(), ts.columns.max())
+    # Add missing columns
+    new_columns = set(time_range).difference(set(ts.columns))
+    for c in new_columns:
+        ts[c]=0
+    # Sort columns
+    ts=ts[sorted(ts.columns)]
+    return ts
+
+def concat_time_series(tss):
+    for i in range(len(tss)):
+        check_days_consecutive(tss[i])
+        tss[i]=tss[i].rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
+    ts_result = pd.concat(tss)
+    ts_result = add_missing_columns(ts_result)
+    ts_result = correct_time_series(ts_result)
+    check_days_consecutive(ts_result)
+    ts_result=ts_result.rename(columns = lambda d : d.strftime(DATE_FORMAT))
+    return ts_result
 
 def check_locations(locations_df,location_info_set,level=None,strict=False):
     for location in locations_df:
@@ -72,6 +103,13 @@ def add_duplication_time(df):
 def add_cfr(df):
     df_cfr = (df.loc['MUERTOS']/df.loc['CONFIRMADOS']).fillna(0)
     df_cfr['TYPE']='CFR'
+    df_cfr=df_cfr.reset_index().set_index(['TYPE','LOCATION'])
+    df=pd.concat([df,df_cfr])
+    return df
+
+def add_uci_ratio(df):
+    df_cfr = (df.loc['UCI']/df.loc['CONFIRMADOS']).fillna(0)
+    df_cfr['TYPE']='UCI_RATIO'
     df_cfr=df_cfr.reset_index().set_index(['TYPE','LOCATION'])
     df=pd.concat([df,df_cfr])
     return df
