@@ -6,15 +6,11 @@ import info_gdf
 
 def info_countries_df():
     countries = wb.get_countries()
-    countries
 
-    # Population dataset, by the World Bank (most recent value)
-    population = wb.get_series('SP.POP.TOTL', mrv=1)
-    population
-
-    # Same data set, indexed with the country code
+    # Population dataset, by the World Bank (most recent value), indexed with the country code
     population = wb.get_series('SP.POP.TOTL', id_or_value='id', simplify_index=True, mrv=1)
-    population
+    # PATCH: if last line is not working (sometimes World Bank doesn't work) replace with the line below
+    # population = pd.read_csv('countries_population.csv').set_index('id')['population']
 
     # Aggregate region, country and population
     df = countries[['region', 'latitude', 'longitude','name']].loc[countries.region != 'Aggregates']
