@@ -52,8 +52,8 @@ def add_min_dist(df):
     return df.reset_index()
 
 def construct_tables():
-    CSV_TEMPLATE = '/home/marian/Escritorio/covid/saliomapita/data/info_{}.csv'
-    GEOJSON_TEMPLATE = '/home/marian/Escritorio/covid/saliomapita/data/maps_{}.geojson'
+    CSV_TEMPLATE = './data_out/info_{}.csv'
+    GEOJSON_TEMPLATE = './data_out/maps_{}.geojson'
     LEVEL_MAPS = [ ('provinces', 1, True),
                    ('departments', 2, True) ]
     df_arg = final_time_series(time_series.time_series_only_arg())
