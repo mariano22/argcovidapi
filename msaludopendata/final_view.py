@@ -1,3 +1,11 @@
+"""
+Quedarse con la ultima imagen de las series temporales y producir tablas con
+las siguientes columnas: (LOCATION, LAST_UPDATE, CFR, CONFIRMADOS, ...)
+Y guarda las tablas en 3 archivos (construct_tables):
+- Por paises
+- Por provincias
+- Por departamentos
+"""
 import pandas as pd
 import numpy as np
 import os
@@ -10,10 +18,17 @@ from common import *
 from geopy import distance,point
 
 def final_time_series(ts=None):
+    """
+    Dada una serie temporal (indice: TYPE, LOCATION y columnas: DATES)
+    retorna una imagen de la ultima fecha (y CFR, CONFIRMADOS, MUERTOS, etc queda
+    en las columnas).
+    """
     if ts is None:
         ts = time_series.time_series()
     ts = ts.reset_index()
+    # 'anti-pivot' (indice: TYPE, LOCATION y columnas: DATES) -> (TYPE, LOCATION, date, value)
     ts = pd.melt(ts, id_vars=['TYPE','LOCATION'], value_vars=ts.columns[2:], var_name='date')
+    # (TYPE, LOCATION, date, value) -> (LOCATION, date, CFR, CONFIRMADOS, MUERTOS, etc)
     ts = ts.pivot_table(index=['LOCATION','date'], columns='TYPE', values='value').reset_index()
     ts['date']=ts['date'].apply(lambda d : pd.to_datetime(d,format=DATE_FORMAT))
     last_date = max(ts['date'])
@@ -54,10 +69,10 @@ def add_min_dist(df):
 def construct_tables():
     CSV_TEMPLATE = './data_out/info_{}.csv'
     GEOJSON_TEMPLATE = './data_out/maps_{}.geojson'
-    LEVEL_MAPS = [ ('provinces', 1, True),
-                   ('departments', 2, True) ]
+    LEVEL_MAPS = [ ('provinces', 1),
+                   ('departments', 2) ]
     df_arg = final_time_series(time_series.time_series_only_arg())
-    for level_name, level_count, add_nulls in LEVEL_MAPS:
+    for level_name, level_count in LEVEL_MAPS:
         df_filtered = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==level_count)]
         df_filtered = add_with_nulls(df_filtered, info_df.GLOBAL_INFO_DF, level_count)
         df_filtered = add_min_dist(df_filtered)

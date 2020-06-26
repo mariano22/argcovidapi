@@ -1,3 +1,7 @@
+"""
+Genera variable global GLOBAL_INFO_GDF con geopandas con info geográfica (polígonos)
+de todas las LOCATION (paises, provs args, deps)
+"""
 import pandas as pd
 import geopandas as gpd
 

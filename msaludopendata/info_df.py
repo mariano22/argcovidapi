@@ -1,3 +1,7 @@
+"""
+Calcula tabla con LOCATION, POPULATION, LAT, LONG y guarda en variable global GLOBAL_INFO_DF
+Calcula diccionario NAME_COUNTRY -> ISO_COUNTRY y guarda en variable global GLOBAL_LOCATION_TO_ISO_COUNTRIES
+"""
 import pandas as pd
 import world_bank_data as wb
 

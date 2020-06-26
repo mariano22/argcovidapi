@@ -1,3 +1,7 @@
+"""
+Produce la serie temporal (acumulada) de Argentina.
+Output functions: ts_arg
+"""
 import pandas as pd
 import numpy as np
 import os
@@ -17,6 +21,10 @@ def correct_date(date):
     return date
 
 def get_data_cleared():
+    """
+    Produce la tabla donde cada fila es un caso. Filtra algunas columnas y hace algunas correcciones.
+    """
+    # Esto es para detectar el encoding con primeros 1000000 lineas
     with open(DATA_IN_CSV_CASOS_ARG, 'rb') as f:
         result = chardet.detect(b''.join(f.readlines(1000000)))
     df = pd.read_csv(DATA_IN_CSV_CASOS_ARG,encoding=result['encoding'])
@@ -61,6 +69,7 @@ def build_ts(df, date_column):
     df = df[['LOCATION', date_column]].rename(columns={date_column:'date'})
     assert set(df.columns)=={'LOCATION', 'date'}
     ts = pivot_time_series(df)
+    # Esto calcula los acumulados
     ts = ts.cumsum(axis=1)
     ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
     ts = add_missing_columns(ts)
@@ -81,6 +90,9 @@ def fallecidos_df(df):
     return build_ts(df_fallecidos, 'fecha_fallecimiento')
 
 def construct_time_series(df):
+    """
+    Construye serie temporal por departamento
+    """
     type_and_ts = [ ('CONFIRMADOS', confirmados_df(df)),
                     ('MUERTOS', fallecidos_df(df)),
                     ('UCI', uci_df(df)) ]
@@ -94,12 +106,16 @@ def construct_time_series(df):
     return df_result
 
 def ts_arg():
+    # Casos con LOCATION por departamento
     df_cases = get_data_cleared()
     assert all(df_cases['LOCATION'].apply(lambda l : l.count('/')==2))
-    df_deps = construct_time_series(df_cases)
+
+    # Casos con LOCATION por provincia
     df_cases_provs = df_cases.copy()
     df_cases_provs['LOCATION'] = df_cases_provs['LOCATION'].apply(lambda l : os.path.dirname(l))
     assert all(df_cases_provs['LOCATION'].apply(lambda l : l.count('/')==1))
+
+    df_deps = construct_time_series(df_cases)
     df_provs = construct_time_series(df_cases_provs)
 
     df = concat_time_series([df_deps,df_provs])

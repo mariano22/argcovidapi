@@ -1,3 +1,8 @@
+"""
+Dada una serie temporal con LOCATION, hace la imagen de duplicacion de tiempo
+y la guarda en IMG_PATH
+Output functions: calculate_colors
+"""
 import pandas as pd
 import numpy as np
 import os
@@ -11,6 +16,9 @@ IMG_PATH = './imgs/'
 IMG_DAYS = 56
 
 def value_to_color(value):
+    """
+    Calcula a partir de (DUPLICATION_TIME,CONFIRMADOS) el color
+    """
     confirmados = value[1]
     dup_time =  value[0]
     if confirmados<10:
@@ -21,6 +29,9 @@ def value_to_color(value):
     print(dup_time)
     assert False
 def values_to_img(values, len_day=5, height=15, rule_height=7, rule_width=1):
+    """
+    Produce imagen de regla a partir de lista values=[(DUPLICATION_TIME,CONFIRMADOS)]
+    """
     color_line = []
     n_days = 0
     rule_line = []

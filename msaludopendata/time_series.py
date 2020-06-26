@@ -1,3 +1,8 @@
+"""
+Agarra las series temporales ts_arg.ts_arg() y ts_countries.ts_countries()
+y agrga _PER100K, DUPLICATION_TIME, CFR, UCI_RATIO y hace chequeos (ver ts_check_locations)
+Output functions: time_series_only_countries, time_series_only_arg
+"""
 import pandas as pd
 import numpy as np
 import os
@@ -10,13 +15,17 @@ import info_df
 import info_gdf
 
 def ts_check_locations(ts):
+    """
+    Chequea que las location de ts esten en la info global GLOBAL_INFO_DF (info poblacional)
+    y GLOBAL_INFO_GDF (info geografica).
+    """
     print('Checking locations INFO')
     check_locations(set(ts.reset_index()['LOCATION']), set(info_df.GLOBAL_INFO_DF['LOCATION']))
     print('Checking locations GEODATA')
     check_locations(set(ts.reset_index()['LOCATION']), set(info_gdf.GLOBAL_INFO_GDF['LOCATION']))
 
 def time_series():
-    df_ts_countries = ts_countries.ts_countries(info_df.GLOBAL_LOCATION_TO_ISO_COUNTRIES)
+    df_ts_countries = ts_countries.ts_countries()
     df_ts_arg = ts_arg.ts_arg()
     ts = concat_time_series([df_ts_arg,df_ts_countries])
 
@@ -28,7 +37,7 @@ def time_series():
     return ts
 
 def time_series_only_countries():
-    ts = ts_countries.ts_countries(info_df.GLOBAL_LOCATION_TO_ISO_COUNTRIES)
+    ts = ts_countries.ts_countries()
     ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)

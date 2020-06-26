@@ -8,11 +8,9 @@ import math
 DATA_IN_GEOJSON_ARG = 'data_in/maps_general.geojson'
 DATA_IN_GEOJSON_WORLD = 'data_in/countries.geojson'
 DATA_IN_CSV_INFO_ARG = 'data_in/info_general.csv'
-DATA_IN_CSV_CONFIRMADOS_US = 'data_in/confirmed_us.csv'
-DATA_IN_CSV_CONFIRMADOS_WORLD ='data_in/confirmed_global.csv'
-DATA_IN_CSV_MUERTOS_US = 'data_in/death_us.csv'
-DATA_IN_CSV_MUERTOS_WORLD = 'data_in/death_global.csv'
-DATA_IN_CSV_CASOS_ARG = 'data_in/covid19Casos.csv'
+DATA_IN_CSV_CONFIRMADOS_WORLD ='data_in/time_series_covid19_confirmed_global.csv'
+DATA_IN_CSV_MUERTOS_WORLD = 'data_in/time_series_covid19_deaths_global.csv'
+DATA_IN_CSV_CASOS_ARG = 'data_in/Covid19Casos.csv'
 
 """ Use ISO 8601 date format """
 DATE_FORMAT = '%Y-%m-%d'
@@ -42,6 +40,10 @@ def check_days_consecutive(ts):
         assert cols[i]-cols[i-1]==datetime.timedelta(days=1)
 
 def add_missing_columns(ts):
+    """
+    Dada una serie temporal con posiblemente huecos de dias, hace que tenga
+    todos los dias del dia minimo al dia maximo
+    """
     time_range = pd.date_range(ts.columns.min(), ts.columns.max())
     # Add missing columns
     new_columns = set(time_range).difference(set(ts.columns))
@@ -52,6 +54,9 @@ def add_missing_columns(ts):
     return ts
 
 def concat_time_series(tss):
+    """
+    Concatena de manera segura una lista de series temporales (pueden tener distintos rangos)
+    """
     for i in range(len(tss)):
         check_days_consecutive(tss[i])
         tss[i]=tss[i].rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
@@ -69,6 +74,10 @@ def check_locations(locations_df,location_info_set,level=None,strict=False):
             assert not strict
 
 def add_per_capita(df, df_geoinfo, type_cols):
+    """
+    Dada una serie temporal (acumulada) con indice TYPE y LOCATION, calcula
+    'colname'_PER100K para cada colname en type_cols.
+    """
     # Add per capita fields
     df_per_capita = pd.merge((df*100000).reset_index(),df_geoinfo[['LOCATION','POPULATION']],on='LOCATION',how='left')
     df_per_capita = df_per_capita.fillna(math.inf).set_index(['TYPE','LOCATION'])
@@ -80,6 +89,10 @@ def add_per_capita(df, df_geoinfo, type_cols):
     return df.sort_index()
 
 def add_duplication_time(df):
+    """
+    Dada una serie temporal (acumulada) con indice TYPE y LOCATION, calcula
+    DUPLICATION_TIME de CONFIRMADOS
+    """
     ts = df.loc['CONFIRMADOS'].copy()
     date_format = '%Y-%m-%d'
     ts=ts.rename(columns = lambda d : pd.to_datetime(d,format=date_format))
@@ -101,6 +114,10 @@ def add_duplication_time(df):
     return pd.concat([df,ts]).sort_index()
 
 def add_cfr(df):
+    """
+    Dada una serie temporal (acumulada) con indice TYPE y LOCATION, calcula
+    Case Fatality Rate (MUERTOS / CONFIRMADOS)
+    """
     df_cfr = (df.loc['MUERTOS']/df.loc['CONFIRMADOS']).fillna(0)
     df_cfr['TYPE']='CFR'
     df_cfr=df_cfr.reset_index().set_index(['TYPE','LOCATION'])
@@ -108,6 +125,10 @@ def add_cfr(df):
     return df
 
 def add_uci_ratio(df):
+    """
+    Dada una serie temporal (acumulada) con indice TYPE y LOCATION, calcula
+    UCI_RATIO (UCI / CONFIRMADOS)
+    """
     df_cfr = (df.loc['UCI']/df.loc['CONFIRMADOS']).fillna(0)
     df_cfr['TYPE']='UCI_RATIO'
     df_cfr=df_cfr.reset_index().set_index(['TYPE','LOCATION'])
