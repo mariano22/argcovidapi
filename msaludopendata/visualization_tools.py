@@ -9,8 +9,8 @@ import os
 from PIL import Image
 
 
-THRESHOLDS = [28,14,7,0,0]
-COLORS_HEXA = [ "F4E5D0", "FED79D", "FBA525", "FF6500", "E6E6E6" ]
+THRESHOLDS = [40,30,20,10,0,0]
+COLORS_HEXA = [ "F4E5D0", "FED79D", "FBA525", "FF6500", "C71E18", "E6E6E6" ]
 COLORS_RGB = [ list(int(c[i:i+2], 16) for i in (0, 2, 4)) for c in COLORS_HEXA ]
 IMG_PATH = './imgs/'
 IMG_DAYS = 56
@@ -21,7 +21,7 @@ def value_to_color(value):
     """
     confirmados = value[1]
     dup_time =  value[0]
-    if confirmados<10:
+    if confirmados<3:
         return COLORS_RGB[-1]
     for threshold,color in zip(THRESHOLDS,COLORS_RGB):
         if dup_time>=threshold:
