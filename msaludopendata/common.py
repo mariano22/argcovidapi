@@ -48,7 +48,7 @@ def add_missing_columns(ts):
     # Add missing columns
     new_columns = set(time_range).difference(set(ts.columns))
     for c in new_columns:
-        ts[c]=0
+        ts[c]=math.nan
     # Sort columns
     ts=ts[sorted(ts.columns)]
     return ts

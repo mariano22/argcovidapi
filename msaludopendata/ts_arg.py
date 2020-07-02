@@ -9,7 +9,7 @@ import datetime
 from common import *
 import chardet
 
-FECHA_FIS = 'fecha_inicio_sintomas'
+FECHA_FIS = 'fecha_diagnostico'
 FECHA_CUIDADO_INTENSIVO = 'fecha_cui_intensivo'
 PROVINCIA_RESIDENCIA = 'residencia_provincia_nombre'
 DEPARTAMENTO_RESIDENCIA = 'residencia_departamento_nombre'
@@ -70,10 +70,12 @@ def build_ts(df, date_column):
     assert set(df.columns)=={'LOCATION', 'date'}
     ts = pivot_time_series(df)
     # Esto calcula los acumulados
+    ts = ts.fillna(0)
     ts = ts.cumsum(axis=1)
     ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
     ts = add_missing_columns(ts)
-    ts = ts.fillna(0)
+    ts = correct_time_series(ts)
+    check_days_consecutive(ts)
     ts = ts.rename(columns = lambda d : d.strftime(DATE_FORMAT))
     return ts
 
