@@ -37,18 +37,26 @@ def get_data_cleared():
         'clasificacion_resumen',
         'cuidado_intensivo',
         FECHA_CUIDADO_INTENSIVO,
+        'carga_provincia_nombre'
     ]
     df = df[cols]
+
+    df[PROVINCIA_RESIDENCIA]=df[PROVINCIA_RESIDENCIA].apply(normalize_str)
+    df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(normalize_str)
+    df['carga_provincia_nombre']=df['carga_provincia_nombre'].apply(normalize_str)
+
+
     df[FECHA_FIS]=df[FECHA_FIS].apply(correct_date)
+    df.loc[(df[PROVINCIA_RESIDENCIA]=='SIN ESPECIFICAR'),PROVINCIA_RESIDENCIA] =  df['carga_provincia_nombre']
     df.loc[(df['fallecido']=='SI') & df['fecha_fallecimiento'].isna(),'fecha_fallecimiento'] =  df[FECHA_FIS]
     df.loc[(df['fallecido']=='SI') & df[FECHA_FIS].isna(),FECHA_FIS] =  df['fecha_fallecimiento']
     df.loc[(df['cuidado_intensivo']=='SI') & df[FECHA_CUIDADO_INTENSIVO].isna(),FECHA_CUIDADO_INTENSIVO] = df[FECHA_FIS]
     df['fecha_fallecimiento']=df['fecha_fallecimiento'].apply(correct_date)
     df[FECHA_CUIDADO_INTENSIVO]=df[FECHA_CUIDADO_INTENSIVO].apply(correct_date)
-    df[PROVINCIA_RESIDENCIA]=df[PROVINCIA_RESIDENCIA].apply(normalize_str)
-    df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(normalize_str)
     df['LOCATION']='ARGENTINA/'+df[PROVINCIA_RESIDENCIA]+'/'+df[DEPARTAMENTO_RESIDENCIA]
     location_replace_dict = {
+      'ARGENTINA/SANTIAGO DEL ESTERO/JUAN F. IBARRA': 'ARGENTINA/SANTIAGO DEL ESTERO/JUAN F IBARRA',
+      'ARGENTINA/SALTA/GRL. JOSE DE SAN MARTIN': 'ARGENTINA/SALTA/GENERAL JOSE DE SAN MARTIN',
       'ARGENTINA/BUENOS AIRES/CORONEL DE MARINA L. ROSALES':
         'ARGENTINA/BUENOS AIRES/CORONEL DE MARINA LEONARDO ROSALES',
       'ARGENTINA/BUENOS AIRES/JOSE C. PAZ':'ARGENTINA/BUENOS AIRES/JOSE C PAZ',
@@ -83,6 +91,26 @@ def uci_df(df):
     df_uci = df[(df['cuidado_intensivo']=='SI') & (df['clasificacion_resumen']=='Confirmado')]
     return build_ts(df_uci, FECHA_CUIDADO_INTENSIVO)
 
+def repartir_sin_especificar(ts):
+    ts=ts.reset_index()
+    ts['PARENT_LOCATION']=ts['LOCATION'].apply(lambda l : os.path.dirname(l))
+    ts_sin_especificar_depto = ts[ts['LOCATION'].apply(lambda l : 'SIN ESPECIFICAR' in l)]
+    ts=ts[ts['LOCATION'].apply(lambda l : 'SIN ESPECIFICAR' not in l)]
+    ts_sin_especificar_depto=ts_sin_especificar_depto.drop(columns='LOCATION')
+
+    ts_totales=ts.drop(columns='LOCATION').groupby('PARENT_LOCATION').sum()
+    ts_sin_especificar_depto=ts_sin_especificar_depto.set_index('PARENT_LOCATION')
+    ts = ts.drop(columns='PARENT_LOCATION').set_index('LOCATION')
+
+    hay_sin_especificar_location = set(ts_sin_especificar_depto.index)
+    for location, time_serie in ts.iterrows():
+        parent_location =  os.path.dirname(location)
+        if parent_location in hay_sin_especificar_location:
+            ratio = (time_serie/ts_totales.loc[parent_location]).fillna(0)
+            diff = round(ratio*ts_sin_especificar_depto.loc[parent_location])
+            ts.loc[location] = time_serie + diff
+    return ts
+
 def confirmados_df(df):
     df_confirmados = df[df['clasificacion_resumen']=='Confirmado'].copy()
     return build_ts(df_confirmados, FECHA_FIS)
@@ -100,6 +128,7 @@ def construct_time_series(df):
                     ('UCI', uci_df(df)) ]
     to_concat = []
     for type, ts in type_and_ts:
+        ts=repartir_sin_especificar(ts)
         ts=ts.reset_index()
         ts['TYPE']=type
         ts=ts.set_index(['TYPE', 'LOCATION'])
