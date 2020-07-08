@@ -38,7 +38,7 @@ def time_series():
 
 def time_series_only_countries():
     ts = ts_countries.ts_countries()
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS'])
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts_check_locations(ts)
@@ -46,7 +46,7 @@ def time_series_only_countries():
 
 def time_series_only_arg():
     ts = ts_arg.ts_arg()
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS'])
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts = add_uci_ratio(ts)

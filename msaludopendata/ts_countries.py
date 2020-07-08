@@ -24,10 +24,27 @@ def global_ts(csv_file):
 
 def ts_countries():
     df_confirmed = concat_time_series([global_ts(DATA_IN_CSV_CONFIRMADOS_WORLD)]).reset_index()
-    df_confirmed['TYPE']='CONFIRMADOS'
     df_death = concat_time_series([global_ts(DATA_IN_CSV_MUERTOS_WORLD)]).reset_index()
+    df_recovered = concat_time_series([global_ts(DATA_IN_CSV_RECOVERED_WORLD)]).reset_index()
+
+    df_confirmed['TYPE']='CONFIRMADOS'
     df_death['TYPE']='MUERTOS'
-    df = concat_time_series([df_confirmed.set_index(['TYPE', 'LOCATION']),df_death.set_index(['TYPE', 'LOCATION'])]).reset_index()
+    df_recovered['TYPE']='RECUPERADOS'
+    df_confirmed=df_confirmed.set_index(['TYPE', 'LOCATION'])
+    df_death=df_death.set_index(['TYPE', 'LOCATION'])
+    df_recovered=df_recovered.set_index(['TYPE', 'LOCATION'])
+    df = concat_time_series([df_confirmed,df_death,df_recovered])
+
+    df_actives = df.loc['CONFIRMADOS']-df.loc['RECUPERADOS']-df.loc['MUERTOS']
+
+    df_actives=df_actives.reset_index()
+    df_actives['TYPE']='ACTIVOS'
+    df_actives=df_actives.set_index(['TYPE', 'LOCATION'])
+    df = concat_time_series([df,df_actives])
+    df = df[df.index.get_level_values(0)!='RECUPERADOS']
+
+    df = df.reset_index()
     df['LOCATION']=df['LOCATION'].apply(lambda l : info_df.GLOBAL_LOCATION_TO_ISO_COUNTRIES.get(l,l))
     df=df.set_index(['TYPE', 'LOCATION'])
+
     return df

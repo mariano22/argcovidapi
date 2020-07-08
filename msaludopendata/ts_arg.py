@@ -35,6 +35,7 @@ def get_data_cleared():
         'fallecido',
         'fecha_fallecimiento',
         'clasificacion_resumen',
+        'CLASIFICACION',
         'cuidado_intensivo',
         FECHA_CUIDADO_INTENSIVO,
         'carga_provincia_nombre'
@@ -44,6 +45,7 @@ def get_data_cleared():
     df[PROVINCIA_RESIDENCIA]=df[PROVINCIA_RESIDENCIA].apply(normalize_str)
     df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(normalize_str)
     df['carga_provincia_nombre']=df['carga_provincia_nombre'].apply(normalize_str)
+    df['CLASIFICACION']=df['CLASIFICACION'].apply(normalize_str)
 
 
     df[FECHA_FIS]=df[FECHA_FIS].apply(correct_date)
@@ -111,6 +113,10 @@ def repartir_sin_especificar(ts):
             ts.loc[location] = time_serie + diff
     return ts
 
+def activos_df(df):
+    df_activos = df[df['CLASIFICACION'].apply(lambda l: 'ACTIVO' in l and 'NO ACTIVO' not in l)].copy()
+    return build_ts(df_activos, FECHA_FIS)
+
 def confirmados_df(df):
     df_confirmados = df[df['clasificacion_resumen']=='Confirmado'].copy()
     return build_ts(df_confirmados, FECHA_FIS)
@@ -125,7 +131,8 @@ def construct_time_series(df):
     """
     type_and_ts = [ ('CONFIRMADOS', confirmados_df(df)),
                     ('MUERTOS', fallecidos_df(df)),
-                    ('UCI', uci_df(df)) ]
+                    ('UCI', uci_df(df)),
+                    ('ACTIVOS', activos_df(df)) ]
     to_concat = []
     for type, ts in type_and_ts:
         ts=repartir_sin_especificar(ts)
