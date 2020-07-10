@@ -6,3 +6,4 @@ __pycache__
 .ipynb_checkpoints
 /borrador
 /localdata
+/msaludopendata/saliomapita_dependency.py

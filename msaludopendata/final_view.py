@@ -11,10 +11,12 @@ import numpy as np
 import os
 import datetime
 
+import download
 import time_series
 import info_df
 import info_gdf
 from common import *
+from saliomapita_dependency import *
 from geopy import distance,point
 
 def final_time_series(ts=None):
@@ -67,8 +69,6 @@ def add_min_dist(df):
     return df.reset_index()
 
 def construct_tables():
-    CSV_TEMPLATE = './data_out/info_{}.csv'
-    GEOJSON_TEMPLATE = './data_out/maps_{}.geojson'
     LEVEL_MAPS = [ ('provinces', 1),
                    ('departments', 2) ]
     df_arg = final_time_series(time_series.time_series_only_arg())
@@ -84,4 +84,5 @@ def construct_tables():
     save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df_countries, GEOJSON_TEMPLATE.format('countries'))
 
 if __name__ == '__main__':
+    download.download_csvs()
     construct_tables()
