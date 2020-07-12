@@ -32,14 +32,31 @@ def info_countries_df():
     df = df[['LOCATION','POPULATION', 'LAT', 'LONG','name']]
 
     df['name']=df['name'].apply(normalize_str)
-    oldNames = [ "Brunei Darussalam", "Congo, Dem. Rep.", "Congo, Rep.", "Czech Republic", "Egypt, Arab Rep.",
-                 "Iran, Islamic Rep.", "Korea, Rep.", "St. Lucia", "West Bank and Gaza", "Russian Federation",
-                 "Slovak Republic", "United States", "St. Vincent and the Grenadines", "Venezuela, RB",
-                 ]
-    newNames = [ "Brunei", "Congo (Kinshasa)", "Congo (Brazzaville)", "Czechia", "Egypt", "Iran", "Korea, South",
-                 "Saint Lucia", "occupied Palestinian territory", "Russia", "Slovakia", "US",
-                 "Saint Vincent and the Grenadines", "Venezuela" ]
-    name_replace = dict(zip(map(normalize_str,oldNames),map(normalize_str,newNames)))
+    name_replace = {
+        'Brunei Darussalam': 'Brunei',
+        'Congo, Dem. Rep.': 'Congo (Kinshasa)',
+        'Congo, Rep.': 'Congo (Brazzaville)',
+        'Czech Republic': 'Czechia',
+        'Egypt, Arab Rep.': 'Egypt',
+        'Iran, Islamic Rep.': 'Iran',
+        'Korea, Rep.': 'Korea, South',
+        'St. Lucia': 'Saint Lucia',
+        'Russian Federation': 'Russia',
+        'Slovak Republic': 'Slovakia',
+        'United States': 'US',
+        'St. Vincent and the Grenadines': 'Saint Vincent and the Grenadines',
+        'Venezuela, RB': 'Venezuela',
+        'Taiwan, China': 'Taiwan*',
+        'Lao PDR': 'Laos',
+        'Syrian Arab Republic': 'Syria',
+        'BAHAMAS, THE': 'Bahamas',
+        'ST. KITTS AND NEVIS': 'SAINT KITTS AND NEVIS',
+        'KYRGYZ REPUBLIC': 'KYRGYZSTAN',
+        'GAMBIA, THE': 'GAMBIA',
+        'MYANMAR': 'BURMA',
+        'YEMEN, REP.': 'YEMEN',
+    }
+    name_replace = { normalize_str(k): normalize_str(v) for k,v in name_replace.items() }
     df['name']=df['name'].replace(name_replace)
     return df
 

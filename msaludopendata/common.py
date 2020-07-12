@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 import unicodedata
 import math
+from geopy import distance,point
 
 """ INPUT FILES """
 DATA_IN_GEOJSON_ARG = 'data_in/maps_general.geojson'
@@ -20,30 +21,36 @@ def normalize_str(s):
     """ Function for name normalization (handle áéíóú) """
     return unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode("ascii").upper()
 
-def correct_time_series(df):
-    """ Given a time serie: [ NaN NaN 1 2 Nan 3 NaN 4 4 NaN ] transform to [ 0 0 1 2 2 3 3 4 4 4 ]"""
+def is_column_str(ts):
+    """ Check if columns in ts are in str format (we work with str and pd.datetime formats). """
+    return set(type(c) for c in ts.columns) == {str}
+
+def fillna_time_series(df):
+    """ Given a cumulative time serie, complete missing days.
+        [ NaN NaN 1 2 Nan 3 NaN 4 4 NaN ] transform to [ 0 0 1 2 2 3 3 4 4 4 ] """
     for index, row in df.iterrows():
         new_row_data = [0]
         for _, value in row.iteritems():
-            if value>0:
-                new_row_data.append(value)
-            else:
+            if math.isnan(value):
                 new_row_data.append(new_row_data[-1])
-        #print(df.loc[index])
+            else:
+                new_row_data.append(value)
         df.loc[index]=pd.Series(new_row_data[1:],index=row.index)
     return df
 
 def check_days_consecutive(ts):
-    """ Check i-column is the prior day of (i+1)-column """
-    ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
+    """ Check i-column is the prior day of (i+1)-column.
+        Support str and datetime column type. """
+    if is_column_str(ts):
+        ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
     cols = list(ts.columns)
     for i in range(1,len(cols)):
         assert cols[i]-cols[i-1]==datetime.timedelta(days=1)
 
 def add_missing_columns(ts):
     """
-    Dada una serie temporal con posiblemente huecos de dias, hace que tenga
-    todos los dias del dia minimo al dia maximo
+    Dada una serie temporal acumulativa con posiblemente huecos de dias, hace que
+    tenga todos los dias del dia minimo al dia maximo.
     """
     time_range = pd.date_range(ts.columns.min(), ts.columns.max())
     # Add missing columns
@@ -54,21 +61,44 @@ def add_missing_columns(ts):
     ts=ts[sorted(ts.columns)]
     return ts
 
+def correct_ts(ts):
+    """ Main function to correct and check cumulative time series:
+        cumulative ts -> Add missing dates -> Properly fill nan -> Check days are consecutive
+        Support str and datetime column type.
+    """
+    # If columns are in str format transform to datetime (and go back to str at function end)
+    transform_back_to_str = False
+    if is_column_str(ts):
+        ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
+        transform_back_to_str = True
+
+    ts = add_missing_columns(ts)
+    ts = fillna_time_series(ts)
+    check_days_consecutive(ts)
+
+    if transform_back_to_str:
+        ts=ts.rename(columns = lambda d : d.strftime(DATE_FORMAT))
+    return ts
+
 def concat_time_series(tss):
     """
-    Concatena de manera segura una lista de series temporales (pueden tener distintos rangos)
+    Concatena de manera segura una lista de series temporales acumulativas
+    (pueden tener distintos rangos)
     """
     for i in range(len(tss)):
         check_days_consecutive(tss[i])
         tss[i]=tss[i].rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
     ts_result = pd.concat(tss)
-    ts_result = add_missing_columns(ts_result)
-    ts_result = correct_time_series(ts_result)
-    check_days_consecutive(ts_result)
+    ts_result = correct_ts(ts_result)
     ts_result=ts_result.rename(columns = lambda d : d.strftime(DATE_FORMAT))
     return ts_result
 
 def check_locations(locations_df,location_info_set,level=None,strict=False):
+    """
+        Chequea que los elementos de locations_df esten en location_info_set.
+        Si level esta seteado solo analiza las location con cierto numero de '/'
+        Si strict es True, ante un error crashea la ejecucion.
+    """
     for location in locations_df:
         if location not in location_info_set and (level is None or location.count('/')==level):
             print("Location without info:{}".format(location))
@@ -135,3 +165,25 @@ def add_uci_ratio(df):
     df_cfr=df_cfr.reset_index().set_index(['TYPE','LOCATION'])
     df=pd.concat([df,df_cfr])
     return df
+
+def add_min_dist(df):
+    """ Dada una tabla con columnas ('LOCATION', 'LAT', 'LONG') agrega columna
+        'MIN_DIST' con la minima distancia de cada LOCATION a otra. """
+    print('Adding MIN_DIST...')
+    df=df.set_index('LOCATION')
+    df=df[~df['LAT'].isna() & ~df['LONG'].isna()]
+    min_dist_data = []
+    for location_1,r_1 in df.iterrows():
+        min_dist_location = ''
+        min_dist = 10000000
+        for location_2,r_2 in df.iterrows():
+            p_1=point.Point(latitude=r_1['LAT'], longitude=r_1['LONG'])
+            p_2=point.Point(latitude=r_2['LAT'], longitude=r_2['LONG'])
+            dist = distance.distance(p_1, p_2).km
+            if location_1!=location_2 and min_dist>dist:
+                min_dist = dist
+                min_dist_location = location_2
+        assert min_dist_location!=''
+        min_dist_data.append(min_dist)
+    df['MIN_DIST'] = pd.Series(index=df.index,data=min_dist_data)
+    return df.reset_index()

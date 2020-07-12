@@ -24,19 +24,8 @@ def ts_check_locations(ts):
     print('Checking locations GEODATA')
     check_locations(set(ts.reset_index()['LOCATION']), set(info_gdf.GLOBAL_INFO_GDF['LOCATION']))
 
-def time_series():
-    df_ts_countries = ts_countries.ts_countries()
-    df_ts_arg = ts_arg.ts_arg()
-    ts = concat_time_series([df_ts_arg,df_ts_countries])
-
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS'])
-    ts = add_duplication_time(ts)
-    ts = add_cfr(ts)
-    ts = add_uci_ratio(ts)
-    ts_check_locations(ts)
-    return ts
-
-def time_series_only_countries():
+def time_series_countries():
+    """ Add extra TYPE entries to ts_countries and return """
     ts = ts_countries.ts_countries()
     ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS'])
     ts = add_duplication_time(ts)
@@ -44,7 +33,8 @@ def time_series_only_countries():
     ts_check_locations(ts)
     return ts
 
-def time_series_only_arg():
+def time_series_arg():
+    """ Add extra TYPE entries to ts_arg and return """
     ts = ts_arg.ts_arg()
     ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS'])
     ts = add_duplication_time(ts)

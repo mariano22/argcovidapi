@@ -9,12 +9,14 @@ import datetime
 from common import *
 import chardet
 
+""" Algunas definiciones de nombres de columnas para la tabla CovidCasos de MinSalud. """
 FECHA_FIS = 'fecha_diagnostico'
 FECHA_CUIDADO_INTENSIVO = 'fecha_cui_intensivo'
 PROVINCIA_RESIDENCIA = 'residencia_provincia_nombre'
 DEPARTAMENTO_RESIDENCIA = 'residencia_departamento_nombre'
 
 def correct_date(date):
+    """ Set year=2020 Some cases appear with bad year on date. """
     date_format = '%Y-%m-%d'
     if type(date)==str:
         return pd.to_datetime(date,format=date_format).replace(year=2020).strftime(DATE_FORMAT)
@@ -70,69 +72,86 @@ def get_data_cleared():
     return df
 
 def pivot_time_series(df):
+    """ Dada tabla con columnas {'LOCATION', 'date'} construye una serie temporal
+        no acumulativa. O sea, con indice LOCATION, columnas las diferentes
+        fechas que aparecen y valor la cantidad de entradas que caen en dicha fecha. """
     df['value']=1
     df = df.groupby(['LOCATION','date']).sum().reset_index()
     df = df.pivot_table(index=['LOCATION'], columns='date', values='value')
+    df = df.fillna(0)
     return df
 
 def build_ts(df, date_column):
+    """ Tabla de casos (una fila, un caso) con columnas LOCATION y date_column
+        construye una serie temporal acumulativa en base a date_column. """
     df = df[['LOCATION', date_column]].rename(columns={date_column:'date'})
     assert set(df.columns)=={'LOCATION', 'date'}
     ts = pivot_time_series(df)
     # Esto calcula los acumulados
-    ts = ts.fillna(0)
     ts = ts.cumsum(axis=1)
-    ts = ts.rename(columns = lambda d : pd.to_datetime(d,format=DATE_FORMAT))
-    ts = add_missing_columns(ts)
-    ts = correct_time_series(ts)
-    check_days_consecutive(ts)
-    ts = ts.rename(columns = lambda d : d.strftime(DATE_FORMAT))
+    ts = correct_ts(ts)
     return ts
 
+def repartir_sin_especificar(ts):
+    """ Dada una serie temporal con indice LOCATION reparte las entradas SIN ESPECIFICAR
+        entre las que compartan el mismo PARENT_LOCATION (os.path.dirname(LOCATION))
+        lo hace proporcionalmente y redondeando. """
+    # Filtramos quedandonos con los que no terminan en 'SIN ESPECIFICAR'
+    ts_especificado =  ts[ts.index.map(lambda l : 'SIN ESPECIFICAR' not in l)].copy()
+
+    # Calculamos el total agrupando por 'PARENT_LOCATION' (os.path.dirname(LOCATION)) una vez aplicado el filtro
+    ts_total_especificado = ts_especificado.copy()
+    ts_total_especificado.index = ts_total_especificado.index.map(os.path.dirname)
+    ts_total_especificado = ts_total_especificado.reset_index().groupby('LOCATION').sum()
+
+    # Filtramos los que terminan en 'NO ESPECIFIAR', los indexamos por PARENT_LOCATION
+    ts_sin_especificar = ts[ts.index.map(lambda l : 'SIN ESPECIFICAR' in l)].copy()
+    ts_sin_especificar.index = ts_sin_especificar.index.map(os.path.dirname)
+    # Agregamos 0's a los PARENT_LOCATION que figuran en ts_especificado pero NO poseen SIN ESPECIFICAR (SIN ESPECIFICAR = 0 para esos casos)
+    ts_sin_especificar = ts_sin_especificar.append(
+        pd.DataFrame(index = set(l for l in ts_especificado.index.map(os.path.dirname) if l not in ts_sin_especificar.index),
+                     columns = ts_sin_especificar.columns).fillna(0))
+
+    # Creamos DataFrame del mismo shape que ts_especificado con los ts_sin_especificar y ts_total_especificado
+    # respectivo al PARENT_LOCATION de cada ts_especificado.
+    ts_sin_especificar_respectivo = ts_sin_especificar.loc[ts_especificado.index.map(os.path.dirname)].copy()
+    ts_sin_especificar_respectivo.index = ts_especificado.index
+
+    ts_total_respectivo = ts_total_especificado.loc[ts_especificado.index.map(os.path.dirname)].copy()
+    ts_total_respectivo.index = ts_especificado.index
+
+    return round(ts_especificado + (ts_especificado/ts_total_respectivo).fillna(0) * ts_sin_especificar_respectivo)
+
 def uci_df(df):
+    """ Tabla de casos -> serie temporal de UCI (pacientes en terapia intensiva) por LOCATION """
     df_uci = df[(df['cuidado_intensivo']=='SI') & (df['clasificacion_resumen']=='Confirmado')]
     return build_ts(df_uci, FECHA_CUIDADO_INTENSIVO)
 
-def repartir_sin_especificar(ts):
-    ts=ts.reset_index()
-    ts['PARENT_LOCATION']=ts['LOCATION'].apply(lambda l : os.path.dirname(l))
-    ts_sin_especificar_depto = ts[ts['LOCATION'].apply(lambda l : 'SIN ESPECIFICAR' in l)]
-    ts=ts[ts['LOCATION'].apply(lambda l : 'SIN ESPECIFICAR' not in l)]
-    ts_sin_especificar_depto=ts_sin_especificar_depto.drop(columns='LOCATION')
-
-    ts_totales=ts.drop(columns='LOCATION').groupby('PARENT_LOCATION').sum()
-    ts_sin_especificar_depto=ts_sin_especificar_depto.set_index('PARENT_LOCATION')
-    ts = ts.drop(columns='PARENT_LOCATION').set_index('LOCATION')
-
-    hay_sin_especificar_location = set(ts_sin_especificar_depto.index)
-    for location, time_serie in ts.iterrows():
-        parent_location =  os.path.dirname(location)
-        if parent_location in hay_sin_especificar_location:
-            ratio = (time_serie/ts_totales.loc[parent_location]).fillna(0)
-            diff = round(ratio*ts_sin_especificar_depto.loc[parent_location])
-            ts.loc[location] = time_serie + diff
-    return ts
-
 def activos_df(df):
+    """ Tabla de casos -> serie temporal de ACTIVOS por LOCATION """
     df_activos = df[df['CLASIFICACION'].apply(lambda l: 'ACTIVO' in l and 'NO ACTIVO' not in l)].copy()
     return build_ts(df_activos, FECHA_FIS)
 
 def confirmados_df(df):
+    """ Tabla de casos -> serie temporal de CONFIRMADOS por LOCATION """
     df_confirmados = df[df['clasificacion_resumen']=='Confirmado'].copy()
     return build_ts(df_confirmados, FECHA_FIS)
 
 def fallecidos_df(df):
+    """ Tabla de casos -> serie temporal de MUERTOS por LOCATION """
     df_fallecidos = df[(~df['fecha_fallecimiento'].isna()) & (df['clasificacion_resumen']=='Confirmado')].copy()
     return build_ts(df_fallecidos, 'fecha_fallecimiento')
 
 def construct_time_series(df):
     """
-    Construye serie temporal por departamento
+    Dada una tabla de casos (una fila por caso) construye series temporales de
+    cada LOCATION (indice TYPE, LOCATION).
     """
     type_and_ts = [ ('CONFIRMADOS', confirmados_df(df)),
-                    ('MUERTOS', fallecidos_df(df)),
-                    ('UCI', uci_df(df)),
-                    ('ACTIVOS', activos_df(df)) ]
+                    ('MUERTOS',     fallecidos_df(df)),
+                    ('UCI',         uci_df(df)),
+                    ('ACTIVOS',     activos_df(df)),
+                  ]
     to_concat = []
     for type, ts in type_and_ts:
         ts=repartir_sin_especificar(ts)
@@ -144,15 +163,16 @@ def construct_time_series(df):
     return df_result
 
 def ts_arg():
-    # Casos con LOCATION por departamento
+    # Tabla de casos con LOCATION por departamento
     df_cases = get_data_cleared()
     assert all(df_cases['LOCATION'].apply(lambda l : l.count('/')==2))
 
-    # Casos con LOCATION por provincia
+    # Tabla de casos con LOCATION por provincia
     df_cases_provs = df_cases.copy()
     df_cases_provs['LOCATION'] = df_cases_provs['LOCATION'].apply(lambda l : os.path.dirname(l))
     assert all(df_cases_provs['LOCATION'].apply(lambda l : l.count('/')==1))
 
+    # Contruimos series temporales dada la tabla de casos
     df_deps = construct_time_series(df_cases)
     df_provs = construct_time_series(df_cases_provs)
 
