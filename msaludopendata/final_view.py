@@ -16,9 +16,10 @@ import time_series
 import info_df
 import info_gdf
 from common import *
-from saliomapita_dependency import *
+import saliomapita_dependency
+import visualization_tools
 
-def final_time_series(ts):
+def final_view(ts):
     """
     Dada una serie temporal (indice: TYPE, LOCATION y columnas: DATES)
     retorna una imagen de la ultima fecha (y CFR, CONFIRMADOS, MUERTOS, etc queda
@@ -39,29 +40,45 @@ def final_time_series(ts):
     df_final = pd.merge(df_final,info_df.GLOBAL_INFO_DF,on='LOCATION',how='left')
     return df_final
 
-def add_with_nulls(df,df_info,level_count):
-    df_info = df_info[df_info['LOCATION'].apply(lambda l : l.count('/')==level_count)]
-    df = pd.merge(df,df_info['LOCATION'],on='LOCATION',how='outer').fillna(0)
-    return df
-
 def save_restricted_map(gdf,df,map_filename):
-    gdf[gdf['LOCATION'].apply(lambda l : l in set(df['LOCATION']))].to_file(map_filename, driver='GeoJSON')
+    """ Guarda en map_filename las geoshapes cuyas LOCATION aparecen en df['LOCATION'] """
+    location_set = set(df['LOCATION'])
+    gdf[gdf['LOCATION'].apply(lambda l : l in location_set)].to_file(map_filename, driver='GeoJSON')
+
+def save_final_view(df, df_name):
+    """ Dado un DataFrame con la vista final de cierta granularidad genera los
+        .csv y .geojson
+        Agrega campo MIN_DIST para visualizar etiquetas. """
+    df = add_min_dist(df)
+    df.to_csv(saliomapita_dependency.CSV_TEMPLATE.format(df_name),index=False)
+    save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df, saliomapita_dependency.GEOJSON_TEMPLATE.format(df_name))
 
 def construct_tables():
-    LEVEL_MAPS = [ ('provinces', 1),
-                   ('departments', 2) ]
-    df_arg = final_time_series(time_series.time_series_arg())
-    for level_name, level_count in LEVEL_MAPS:
-        df_filtered = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==level_count)]
-        df_filtered = add_with_nulls(df_filtered, info_df.GLOBAL_INFO_DF, level_count)
-        df_filtered = add_min_dist(df_filtered)
-        df_filtered.to_csv(CSV_TEMPLATE.format(level_name),index=False)
-        save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df_filtered, GEOJSON_TEMPLATE.format(level_name))
-    df_countries = final_time_series(time_series.time_series_countries())
-    df_countries = add_min_dist(df_countries)
-    df_countries.to_csv(CSV_TEMPLATE.format('countries'),index=False)
-    save_restricted_map(info_gdf.GLOBAL_INFO_GDF, df_countries, GEOJSON_TEMPLATE.format('countries'))
+    print('Generating argentinian time series...')
+    ts_arg = time_series.time_series_arg()
+    print('Generating countries time series...')
+    ts_countries = time_series.time_series_countries()
+
+    print('Generating images')
+    visualization_tools.calculate_images(ts_arg)
+    visualization_tools.calculate_images(ts_countries)
+
+    print('Generating final view tables...')
+    df_arg       = final_view(ts_arg)
+    df_arg       = pd.merge(df_arg,  info_df.GLOBAL_INFO_DF['LOCATION'],on='LOCATION',how='outer').fillna(0)
+
+    df_countries = final_view(ts_countries)
+
+    df_provinces   = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==1)]
+    df_departments = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==2)]
+
+    print('Saving provinces...')
+    save_final_view(df_provinces, 'provinces')
+    print('Saving departments...')
+    save_final_view(df_departments, 'departments')
+    print('Saving countries...')
+    save_final_view(df_countries, 'countries')
 
 if __name__ == '__main__':
-    download.download_csvs()
+    #download.download_csvs()
     construct_tables()
