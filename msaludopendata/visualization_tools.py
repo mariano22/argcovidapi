@@ -16,7 +16,11 @@ import saliomapita_dependency
 # Si no si los confirmados son mayores o iguales que THRESHOLDS[1] se usa COLORS_HEXA[1]
 # ... asi sucesivamente
 # THRESHOLDS[-2] DEBE ser siempre 0, estableciendo el color de menor valor.
-MIN_THRESHOLD = 3
+MIN_THRESHOLD = {
+    0: 100,
+    1: 10,
+    2: 3,
+}
 THRESHOLDS = [40,30,20,10,0,0]
 COLORS_HEXA = [ "F4E5D0", "FED79D", "FBA525", "FF6500", "C71E18", "E6E6E6" ]
 assert THRESHOLDS[-2]==0
@@ -25,13 +29,13 @@ COLORS_RGB = [ list(int(c[i:i+2], 16) for i in (0, 2, 4)) for c in COLORS_HEXA ]
 # Cantidad de dias que aparecen en las imagenes
 IMG_DAYS = 56
 
-def value_to_color(value):
+def value_to_color(value, location_level):
     """
     Calcula a partir de (DUPLICATION_TIME,CONFIRMADOS) el color
     """
     confirmados = value[1]
     dup_time =  value[0]
-    if confirmados<MIN_THRESHOLD:
+    if confirmados<MIN_THRESHOLD[location_level]:
         return COLORS_RGB[-1]
     for threshold,color in zip(THRESHOLDS,COLORS_RGB):
         if dup_time>=threshold:
@@ -39,7 +43,7 @@ def value_to_color(value):
     # Esto no deberia suceder nunca
     print(dup_time)
     assert False
-def values_to_img(values, len_day=5, height=15, rule_height=7, rule_width=1):
+def values_to_img(values, location_level, len_day=5, height=15, rule_height=7, rule_width=1):
     """
     Produce imagen de regla a partir de lista values=[(DUPLICATION_TIME,CONFIRMADOS)]
         - len_day: longitud del dia en pixeles.
@@ -56,7 +60,7 @@ def values_to_img(values, len_day=5, height=15, rule_height=7, rule_width=1):
         for _ in range(rule_width):
             color_line.append((0,0,0) if n_days%7==0 else (255,255,255))
             rule_line.append((0,0,0) if n_days%7==0 else (255,255,255))
-        color = value_to_color(v)
+        color = value_to_color(v, location_level)
         for _ in range(len_day):
             color_line.append(color)
             rule_line.append((255,255,255))
@@ -77,5 +81,5 @@ def calculate_images(df):
     for location in df.index.get_level_values(0):
         # print(location)
         values = list(zip(list(df.loc[location].loc['DUPLICATION_TIME']) ,list(df.loc[location].loc['CONFIRMADOS'])))
-        img = values_to_img(values[-IMG_DAYS:])
+        img = values_to_img(values[-IMG_DAYS:], location.count('/'))
         img.save(os.path.join(saliomapita_dependency.IMG_PATH,location.replace('/','-')+'.png'))
