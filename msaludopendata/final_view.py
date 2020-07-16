@@ -80,5 +80,5 @@ def construct_tables():
     save_final_view(df_countries, 'countries')
 
 if __name__ == '__main__':
-    #download.download_csvs()
+    download.download_csvs()
     construct_tables()
