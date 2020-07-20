@@ -172,11 +172,16 @@ def ts_arg():
     df_cases_provs['LOCATION'] = df_cases_provs['LOCATION'].apply(lambda l : os.path.dirname(l))
     assert all(df_cases_provs['LOCATION'].apply(lambda l : l.count('/')==1))
 
+    # Tabla de casos con LOCATION=='ARG'
+    df_cases_arg = df_cases.copy()
+    df_cases_arg['LOCATION'] = 'ARG'
+
     # Contruimos series temporales dada la tabla de casos
     df_deps = construct_time_series(df_cases)
     df_provs = construct_time_series(df_cases_provs)
+    df_arg = construct_time_series(df_cases_arg)
 
-    df = concat_time_series([df_deps,df_provs])
+    df = concat_time_series([df_deps,df_provs,df_arg])
     return df
 
 if __name__ == '__main__':

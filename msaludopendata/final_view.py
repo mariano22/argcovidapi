@@ -72,6 +72,11 @@ def construct_tables():
     df_provinces   = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==1)]
     df_departments = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==2)]
 
+    # Set Argentina row in df_countries using MinSalud data (instead of JohnHopkins global data)
+    df_only_arg = df_arg[df_arg['LOCATION']=='ARG']
+    df_countries = df_countries[df_countries['LOCATION']!='ARG']
+    df_countries = pd.concat([df_countries,df_only_arg],ignore_index=True)
+
     print('Saving provinces...')
     save_final_view(df_provinces, 'provinces')
     print('Saving departments...')
