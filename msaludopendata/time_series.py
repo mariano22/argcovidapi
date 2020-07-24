@@ -11,6 +11,7 @@ import datetime
 from common import *
 import ts_countries
 import ts_arg
+import ts_caba
 import info_df
 import info_gdf
 
@@ -40,5 +41,14 @@ def time_series_arg():
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts = add_uci_ratio(ts)
+    ts_check_locations(ts)
+    return ts
+
+def time_series_caba():
+    """ Add extra TYPE entries to ts_caba and return """
+    ts = ts_caba.ts_caba()
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS'])
+    ts = add_duplication_time(ts)
+    ts = add_cfr(ts)
     ts_check_locations(ts)
     return ts

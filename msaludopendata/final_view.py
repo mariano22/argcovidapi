@@ -58,16 +58,20 @@ def construct_tables():
     ts_arg = time_series.time_series_arg()
     print('Generating countries time series...')
     ts_countries = time_series.time_series_countries()
+    print('Generating caba time series...')
+    ts_caba = time_series.time_series_caba()
 
     print('Generating images')
     visualization_tools.calculate_images(ts_arg)
     visualization_tools.calculate_images(ts_countries)
+    visualization_tools.calculate_images(ts_caba)
 
     print('Generating final view tables...')
     df_arg       = final_view(ts_arg)
     df_arg       = pd.merge(df_arg,  info_df.GLOBAL_INFO_DF['LOCATION'],on='LOCATION',how='outer').fillna(0)
 
     df_countries = final_view(ts_countries)
+    df_caba      = final_view(ts_caba)
 
     df_provinces   = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==1)]
     df_departments = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==2)]
@@ -83,6 +87,8 @@ def construct_tables():
     save_final_view(df_departments, 'departments')
     print('Saving countries...')
     save_final_view(df_countries, 'countries')
+    print('Saving caba...')
+    save_final_view(df_caba, 'caba')
 
 if __name__ == '__main__':
     download.download_csvs()

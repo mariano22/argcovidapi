@@ -20,6 +20,7 @@ MIN_THRESHOLD = {
     0: 100,
     1: 10,
     2: 3,
+    3: 3
 }
 THRESHOLDS = [40,30,20,10,0,0]
 COLORS_HEXA = [ "F4E5D0", "FED79D", "FBA525", "FF6500", "C71E18", "E6E6E6" ]

@@ -13,6 +13,7 @@ DATA_IN_CSV_CONFIRMADOS_WORLD ='data_in/time_series_covid19_confirmed_global.csv
 DATA_IN_CSV_MUERTOS_WORLD = 'data_in/time_series_covid19_deaths_global.csv'
 DATA_IN_CSV_RECOVERED_WORLD = 'data_in/time_series_covid19_recovered_global.csv'
 DATA_IN_CSV_CASOS_ARG = 'data_in/Covid19Casos.csv'
+DATA_IN_CSV_CASOS_CABA = 'data_in/casos_covid19_caba.csv'
 
 """ Use ISO 8601 date format """
 DATE_FORMAT = '%Y-%m-%d'

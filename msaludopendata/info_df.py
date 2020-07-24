@@ -66,14 +66,20 @@ def location_to_iso(df_info):
 
 GLOBAL_INFO_DF = None
 GLOBAL_LOCATION_TO_ISO_COUNTRIES = None
+GLOBAL_BARRIOS_TO_COMUNA = None
 
 def info_df():
-    global GLOBAL_INFO_DF, GLOBAL_LOCATION_TO_ISO_COUNTRIES
+    global GLOBAL_INFO_DF, GLOBAL_LOCATION_TO_ISO_COUNTRIES, GLOBAL_BARRIOS_TO_COMUNA
 
     df_info_world = info_countries_df()
     GLOBAL_LOCATION_TO_ISO_COUNTRIES = location_to_iso(df_info_world)
 
     df_info_arg = pd.read_csv(DATA_IN_CSV_INFO_ARG)
     GLOBAL_INFO_DF = pd.concat([df_info_world,df_info_arg],ignore_index=True)
+
+    df_caba = GLOBAL_INFO_DF[GLOBAL_INFO_DF['LOCATION'].apply(
+        lambda l: l.startswith('ARGENTINA/CABA/') and l.count('/')==3 )].copy()
+    GLOBAL_BARRIOS_TO_COMUNA = [ r['LOCATION'].split('/') for _,r in df_caba.iterrows() ]
+    GLOBAL_BARRIOS_TO_COMUNA = { barrio:comuna for _, _, comuna, barrio in GLOBAL_BARRIOS_TO_COMUNA }
 
 info_df()
