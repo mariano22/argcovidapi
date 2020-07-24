@@ -52,3 +52,11 @@ def time_series_caba():
     ts = add_cfr(ts)
     ts_check_locations(ts)
     return ts
+
+if __name__ == '__main__':
+    print('Generating argentinian time series...')
+    time_series_arg().to_csv('data_out/time_series_arg.csv')
+    print('Generating countries time series...')
+    time_series_countries().to_csv('data_out/time_series_countries.csv')
+    print('Generating caba time series...')
+    time_series_caba().to_csv('data_out/time_series_caba.csv')
