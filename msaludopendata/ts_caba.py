@@ -64,7 +64,7 @@ def get_data_cleared():
 
 def confirmados_df(df):
     """ Tabla de casos -> serie temporal de CONFIRMADOS por LOCATION """
-    df_confirmados = df[df[CLASIFICACION]=='CONFIRMADO'].copy()
+    df_confirmados = df[(df[CLASIFICACION]=='CONFIRMADO') | (df[CLASIFICACION]=='NEGATIVIZADO')].copy()
     return ts_arg.build_ts(df_confirmados,FECHA_DE_CLASIFICACION)
 
 def fallecidos_df(df):
