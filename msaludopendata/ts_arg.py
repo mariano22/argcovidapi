@@ -14,6 +14,7 @@ FECHA_FIS = 'fecha_diagnostico'
 FECHA_CUIDADO_INTENSIVO = 'fecha_cui_intensivo'
 PROVINCIA_RESIDENCIA = 'residencia_provincia_nombre'
 DEPARTAMENTO_RESIDENCIA = 'residencia_departamento_nombre'
+CLASIFICACION = 'clasificacion'
 
 def correct_date(date):
     """ Set year=2020 Some cases appear with bad year on date. """
@@ -37,7 +38,7 @@ def get_data_cleared():
         'fallecido',
         'fecha_fallecimiento',
         'clasificacion_resumen',
-        'CLASIFICACION',
+        CLASIFICACION,
         'cuidado_intensivo',
         FECHA_CUIDADO_INTENSIVO,
         'carga_provincia_nombre'
@@ -47,7 +48,7 @@ def get_data_cleared():
     df[PROVINCIA_RESIDENCIA]=df[PROVINCIA_RESIDENCIA].apply(normalize_str)
     df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(normalize_str)
     df['carga_provincia_nombre']=df['carga_provincia_nombre'].apply(normalize_str)
-    df['CLASIFICACION']=df['CLASIFICACION'].apply(normalize_str)
+    df[CLASIFICACION]=df[CLASIFICACION].apply(normalize_str)
 
 
     df[FECHA_FIS]=df[FECHA_FIS].apply(correct_date)
@@ -129,7 +130,7 @@ def uci_df(df):
 
 def activos_df(df):
     """ Tabla de casos -> serie temporal de ACTIVOS por LOCATION """
-    df_activos = df[df['CLASIFICACION'].apply(lambda l: 'ACTIVO' in l and 'NO ACTIVO' not in l)].copy()
+    df_activos = df[df[CLASIFICACION].apply(lambda l: 'ACTIVO' in l and 'NO ACTIVO' not in l)].copy()
     return build_ts(df_activos, FECHA_FIS)
 
 def confirmados_df(df):
