@@ -14,6 +14,7 @@ import ts_arg
 import ts_caba
 import info_df
 import info_gdf
+import download
 
 def ts_check_locations(ts):
     """
@@ -54,6 +55,7 @@ def time_series_caba():
     return ts
 
 if __name__ == '__main__':
+    download.download_csvs()
     print('Generating argentinian time series...')
     time_series_arg().to_csv('data_out/time_series_arg.csv')
     print('Generating countries time series...')

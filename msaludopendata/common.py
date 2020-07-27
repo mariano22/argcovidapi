@@ -20,6 +20,9 @@ DATE_FORMAT = '%Y-%m-%d'
 
 def normalize_str(s):
     """ Function for name normalization (handle áéíóú) """
+    if type(s)==float:
+        assert math.isnan(s)
+        return ''
     return unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode("ascii").upper()
 
 def is_column_str(ts):
