@@ -23,7 +23,7 @@ def normalize_str(s):
     if type(s)==float:
         assert math.isnan(s)
         return ''
-    return unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode("ascii").upper()
+    return unicodedata.normalize("NFKD", s).encode("ascii","ignore").decode("ascii").upper().lstrip().rstrip()
 
 def is_column_str(ts):
     """ Check if columns in ts are in str format (we work with str and pd.datetime formats). """
@@ -105,7 +105,7 @@ def check_locations(locations_df,location_info_set,level=None,strict=False):
     """
     for location in locations_df:
         if location not in location_info_set and (level is None or location.count('/')==level):
-            print("Location without info:{}".format(location))
+            print("Location without info:\"{}\"".format(location))
             assert not strict
 
 def add_per_capita(df, df_geoinfo, type_cols):

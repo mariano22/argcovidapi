@@ -20,8 +20,14 @@ def correct_date(date):
     """ Set year=2020 Some cases appear with bad year on date. """
     date_format = '%Y-%m-%d'
     if type(date)==str:
+        date = '2020'+date[4:]
         return pd.to_datetime(date,format=date_format).replace(year=2020).strftime(DATE_FORMAT)
     return date
+
+def comuna_lzero(department_str):
+    if department_str.startswith('COMUNA 0'):
+        return 'COMUNA '+department_str[len('COMUNA 0'):]
+    return department_str
 
 def get_data_cleared():
     """
@@ -58,6 +64,7 @@ def get_data_cleared():
     df.loc[(df['cuidado_intensivo']=='SI') & df[FECHA_CUIDADO_INTENSIVO].isna(),FECHA_CUIDADO_INTENSIVO] = df[FECHA_FIS]
     df['fecha_fallecimiento']=df['fecha_fallecimiento'].apply(correct_date)
     df[FECHA_CUIDADO_INTENSIVO]=df[FECHA_CUIDADO_INTENSIVO].apply(correct_date)
+    df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(comuna_lzero)
     df['LOCATION']='ARGENTINA/'+df[PROVINCIA_RESIDENCIA]+'/'+df[DEPARTAMENTO_RESIDENCIA]
     location_replace_dict = {
       'ARGENTINA/SANTIAGO DEL ESTERO/JUAN F. IBARRA': 'ARGENTINA/SANTIAGO DEL ESTERO/JUAN F IBARRA',
