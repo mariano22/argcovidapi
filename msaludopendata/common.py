@@ -170,6 +170,17 @@ def add_uci_ratio(df):
     df=pd.concat([df,df_cfr])
     return df
 
+def add_confirmados_diff(ts, periods=7):
+    """ Calcula los nuevos confirmados en una serie temporal en periodos de
+        longitud periods. El nuevo campo se llamara CONFIRMADOS_DIFF """
+    confirmados = ts.loc['CONFIRMADOS']
+    confirmados_diff = confirmados-confirmados.shift(periods=periods,axis=1).fillna(0)
+    confirmados_diff = confirmados_diff.reset_index()
+    confirmados_diff['TYPE'] = 'CONFIRMADOS_DIFF'
+    confirmados_diff = confirmados_diff.set_index(['TYPE','LOCATION'])
+    ts = pd.concat([ts,confirmados_diff]).sort_index()
+    return ts
+
 def add_min_dist(df):
     """ Dada una tabla con columnas ('LOCATION', 'LAT', 'LONG') agrega columna
         'MIN_DIST' con la minima distancia de cada LOCATION a otra. """
