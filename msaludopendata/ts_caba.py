@@ -21,9 +21,14 @@ PROVINCIA = 'provincia'
 BARRIO = 'barrio'
 COMUNA = 'comuna'
 
-"""
-# DEPRECATED: Esto estaba porque la fecha antes tenia un formato raro
 MONTH_ABRR_TO_NUMBER = {v.upper(): k for k,v in enumerate(calendar.month_abbr)}
+def is_date_weird(dates):
+    """ Dada una lista de fechas (strings) determina si están en formato 20APR2020:00:00:00.000000 """
+    dates_set = set(dates)
+    return any(month_str in date
+                for month_str in list(MONTH_ABRR_TO_NUMBER)
+                for date in dates_set if type(date)==str)
+
 def caba_date_to_iso(date):
     # Transforma la fecha de los informes de caba formato 20APR2020:00:00:00.000000 a DATE_FORMAT
     global month_abrr_to_number
@@ -32,7 +37,6 @@ def caba_date_to_iso(date):
         return date
     data_str = '2020-{}-{}'.format(MONTH_ABRR_TO_NUMBER[date[2:5]],date[0:2])
     return pd.to_datetime(data_str,format=DATE_FORMAT)
-"""
 
 def process_barrio(barrio):
     """ Normaliza el barrio agregando SIN ESPECIFIAR donde corresponda """
@@ -49,6 +53,10 @@ def get_data_cleared():
     df = pd.read_csv(DATA_IN_CSV_CASOS_CABA,encoding=result['encoding'])
 
     df=df[df[PROVINCIA]=='CABA']
+
+    if is_date_weird( list(df[FECHA_DE_CLASIFICACION]) + list(df[FECHA_DE_FALLECIMIENTO]) ):
+        df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(caba_date_to_iso)
+        df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(caba_date_to_iso)
     df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(ts_arg.correct_date)
     df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(ts_arg.correct_date)
 
