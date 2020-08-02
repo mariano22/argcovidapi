@@ -170,15 +170,16 @@ def add_uci_ratio(df):
     df=pd.concat([df,df_cfr])
     return df
 
-def add_confirmados_diff(ts, periods=7):
-    """ Calcula los nuevos confirmados en una serie temporal en periodos de
-        longitud periods. El nuevo campo se llamara CONFIRMADOS_DIFF """
-    confirmados = ts.loc['CONFIRMADOS']
-    confirmados_diff = confirmados-confirmados.shift(periods=periods,axis=1).fillna(0)
-    confirmados_diff = confirmados_diff.reset_index()
-    confirmados_diff['TYPE'] = 'CONFIRMADOS_DIFF'
-    confirmados_diff = confirmados_diff.set_index(['TYPE','LOCATION'])
-    ts = pd.concat([ts,confirmados_diff]).sort_index()
+def add_value_diff(ts, value_name, periods=7):
+    """ Calcula los nuevos value_name (CONFIRMADOS o DECESOS) en una serie
+        temporal en periodos de longitud periods.
+        El nuevo campo se llamara value_name+'_DIFF' """
+    value = ts.loc[value_name]
+    value_diff = value-value.shift(periods=periods,axis=1).fillna(0)
+    value_diff = value_diff.reset_index()
+    value_diff['TYPE'] = value_name+'_DIFF'
+    value_diff = value_diff.set_index(['TYPE','LOCATION'])
+    ts = pd.concat([ts,value_diff]).sort_index()
     return ts
 
 def add_min_dist(df):

@@ -55,31 +55,48 @@ def save_final_view(df, df_name):
 
 def construct_tables():
     print('Generating argentinian time series...')
-    ts_arg = time_series.time_series_arg()
+    arg_ts = time_series.time_series_arg()
     print('Generating countries time series...')
-    ts_countries = time_series.time_series_countries()
+    countries_ts = time_series.time_series_countries()
     print('Generating caba time series...')
-    ts_caba = time_series.time_series_caba()
+    caba_ts = time_series.time_series_caba()
+
+    # Set Argentina row in ts_countries using MinSalud data (instead of JohnHopkins global data)
+    countries_ts = countries_ts.reset_index()
+    arg_ts       = arg_ts.reset_index()
+    only_arg_ts  = arg_ts[arg_ts['LOCATION']=='ARG']
+    arg_ts       = arg_ts[arg_ts['LOCATION']!='ARG']
+    countries_ts = countries_ts[countries_ts['LOCATION']!='ARG']
+    only_arg_ts = only_arg_ts.set_index(['TYPE', 'LOCATION']).sort_index()
+    countries_ts = countries_ts.set_index(['TYPE', 'LOCATION']).sort_index()
+    arg_ts       = arg_ts.set_index(['TYPE', 'LOCATION']).sort_index()
+    countries_ts = concat_time_series([countries_ts,only_arg_ts])
+
+    print('Generating time series')
+    all_ts = concat_time_series([countries_ts,arg_ts,caba_ts])
+    types = ['CONFIRMADOS','CONFIRMADOS_PER100K',
+             'MUERTOS', 'MUERTOS_PER100K',
+            ]
+    all_ts = all_ts[all_ts.index.map(lambda l : l[0] in types)]
+    all_ts=all_ts[all_ts.columns[-70:]]
+    all_ts_melted = pd.melt(all_ts.reset_index(), id_vars=['TYPE','LOCATION'], value_vars=all_ts.columns, var_name='date')
+    all_ts_melted=all_ts_melted[all_ts_melted['value']!=0]
+    all_ts_melted.to_csv(saliomapita_dependency.CSV_TIME_SERIES,index=False)
 
     print('Generating images')
-    visualization_tools.calculate_images(ts_arg)
-    visualization_tools.calculate_images(ts_countries)
-    visualization_tools.calculate_images(ts_caba)
+    visualization_tools.calculate_images(arg_ts)
+    visualization_tools.calculate_images(countries_ts)
+    visualization_tools.calculate_images(caba_ts)
 
     print('Generating final view tables...')
-    df_arg       = final_view(ts_arg)
+    df_arg       = final_view(arg_ts)
     df_arg       = pd.merge(df_arg,  info_df.GLOBAL_INFO_DF['LOCATION'],on='LOCATION',how='outer').fillna(0)
 
-    df_countries = final_view(ts_countries)
-    df_caba      = final_view(ts_caba)
+    df_countries = final_view(countries_ts)
+    df_caba      = final_view(caba_ts)
 
     df_provinces   = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==1)]
     df_departments = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==2)]
-
-    # Set Argentina row in df_countries using MinSalud data (instead of JohnHopkins global data)
-    df_only_arg = df_arg[df_arg['LOCATION']=='ARG']
-    df_countries = df_countries[df_countries['LOCATION']!='ARG']
-    df_countries = pd.concat([df_countries,df_only_arg],ignore_index=True)
 
     print('Saving provinces...')
     save_final_view(df_provinces, 'provinces')

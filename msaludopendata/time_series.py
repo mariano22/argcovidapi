@@ -39,8 +39,9 @@ def ts_last_day_patch(ts, n_days):
 def time_series_countries():
     """ Add extra TYPE entries to ts_countries and return """
     ts = ts_countries.ts_countries()
-    ts = add_confirmados_diff(ts)
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS', 'CONFIRMADOS_DIFF'])
+    ts = add_value_diff(ts,'CONFIRMADOS')
+    ts = add_value_diff(ts,'MUERTOS')
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS','CONFIRMADOS_DIFF','MUERTOS_DIFF'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts_check_locations(ts)
@@ -49,9 +50,9 @@ def time_series_countries():
 def time_series_arg():
     """ Add extra TYPE entries to ts_arg and return """
     ts = ts_arg.ts_arg()
-    ts = add_confirmados_diff(ts)
-    ts = ts_last_day_patch(ts,3)
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS', 'CONFIRMADOS_DIFF'])
+    ts = add_value_diff(ts,'CONFIRMADOS')
+    ts = add_value_diff(ts,'MUERTOS')
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'ACTIVOS','CONFIRMADOS_DIFF','MUERTOS_DIFF'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts = add_uci_ratio(ts)
@@ -61,9 +62,9 @@ def time_series_arg():
 def time_series_caba():
     """ Add extra TYPE entries to ts_caba and return """
     ts = ts_caba.ts_caba()
-    ts = add_confirmados_diff(ts)
-    ts = ts_last_day_patch(ts,3)
-    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS', 'CONFIRMADOS_DIFF'])
+    ts = add_value_diff(ts,'CONFIRMADOS')
+    ts = add_value_diff(ts,'MUERTOS')
+    ts = add_per_capita(ts,info_df.GLOBAL_INFO_DF, ['CONFIRMADOS','MUERTOS','CONFIRMADOS_DIFF','MUERTOS_DIFF'])
     ts = add_duplication_time(ts)
     ts = add_cfr(ts)
     ts_check_locations(ts)
