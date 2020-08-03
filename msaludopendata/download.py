@@ -17,11 +17,14 @@ def download_csvs():
         (REMOTE_CSV_CASOS_ARG,           DATA_IN_CSV_CASOS_ARG),
         (REMOTE_CSV_CASOS_CABA,          DATA_IN_CSV_CASOS_CABA),
     ]
+    print('Downloading updated csv\'s...')
+    for url, file_path in to_download_url_and_paths:
+        print('Downloading {}'.format(file_path+'.bak'))
+        wget.download(url, file_path)
+    
     print('Erasing prior version of the files...')
     for _, file_path in to_download_url_and_paths:
         if os.path.exists(file_path):
             os.remove(file_path)
-    print('Downloading updated csv\'s...')
-    for url, file_path in to_download_url_and_paths:
-        print('Downloading {}'.format(file_path))
-        wget.download(url, file_path)
+            os.rename(file_path+'.bak',file_path)
+            os.remove(file_path+'.bak')
