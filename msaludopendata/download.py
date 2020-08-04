@@ -19,12 +19,15 @@ def download_csvs():
     ]
     print('Downloading updated csv\'s...')
     for url, file_path in to_download_url_and_paths:
-        print('Downloading {}'.format(file_path+'.bak'))
-        wget.download(url, file_path)
-    
-    print('Erasing prior version of the files...')
-    for _, file_path in to_download_url_and_paths:
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            os.rename(file_path+'.bak',file_path)
-            os.remove(file_path+'.bak')
+        tmp_path = file_path+'.bak'
+        print('Downloading {}...'.format(file_path))
+        try:
+            wget.download(url, tmp_path)
+            if os.path.exists(tmp_path):
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                os.rename(tmp_path,file_path)
+                os.remove(tmp_path)
+        except:
+            print('Error downloading {}, checking all version exists...'.format(file_path))
+            assert os.path.exists(file_path)
