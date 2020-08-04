@@ -18,6 +18,7 @@ import info_gdf
 from common import *
 import saliomapita_dependency
 import visualization_tools
+import partidos_amba
 
 def final_view(ts):
     """
@@ -80,7 +81,6 @@ def construct_tables():
     all_ts = all_ts[all_ts.index.map(lambda l : l[0] in types)]
     all_ts=all_ts[all_ts.columns[-70:]]
     all_ts_melted = pd.melt(all_ts.reset_index(), id_vars=['TYPE','LOCATION'], value_vars=all_ts.columns, var_name='date')
-    all_ts_melted=all_ts_melted[all_ts_melted['value']!=0]
     all_ts_melted.to_csv(saliomapita_dependency.CSV_TIME_SERIES,index=False)
 
     print('Generating images')
@@ -98,6 +98,10 @@ def construct_tables():
     df_provinces   = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==1)]
     df_departments = df_arg[df_arg['LOCATION'].apply(lambda l : l.count('/')==2)]
 
+    df_partidos_amba = df_departments[
+        df_departments['LOCATION'].apply(lambda l : l in partidos_amba.partidos_amba)]
+    df_amba = pd.concat([df_caba,df_partidos_amba],ignore_index=True)
+
     print('Saving provinces...')
     save_final_view(df_provinces, 'provinces')
     print('Saving departments...')
@@ -105,7 +109,7 @@ def construct_tables():
     print('Saving countries...')
     save_final_view(df_countries, 'countries')
     print('Saving caba...')
-    save_final_view(df_caba, 'caba')
+    save_final_view(df_amba, 'caba')
 
 if __name__ == '__main__':
     download.download_csvs()
