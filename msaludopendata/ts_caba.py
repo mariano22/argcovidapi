@@ -26,7 +26,7 @@ def is_date_weird(dates):
     """ Dada una lista de fechas (strings) determina si están en formato 20APR2020:00:00:00.000000 """
     dates_set = set(dates)
     return any(month_str in date
-                for month_str in list(MONTH_ABRR_TO_NUMBER)
+                for month_str in list(MONTH_ABRR_TO_NUMBER) if month_str
                 for date in dates_set if type(date)==str)
 
 def caba_date_to_iso(date):
@@ -49,7 +49,7 @@ def process_barrio(barrio):
 def get_data_cleared():
     """ Produce la tabla donde cada fila es un caso, hace algunas correcciones. """
     with open(DATA_IN_CSV_CASOS_CABA, 'rb') as f:
-        result = chardet.detect(b''.join(f.readlines()))
+        result = chardet.detect(b''.join(f.readlines(1000000)))
     df = pd.read_csv(DATA_IN_CSV_CASOS_CABA,encoding=result['encoding'])
 
     df=df[df[PROVINCIA]=='CABA']
