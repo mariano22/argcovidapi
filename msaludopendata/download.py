@@ -23,11 +23,8 @@ def download_csvs():
         print('Downloading {}...'.format(file_path))
         try:
             wget.download(url, tmp_path)
-            if os.path.exists(tmp_path):
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                os.rename(tmp_path,file_path)
-                os.remove(tmp_path)
-        except:
-            print('Error downloading {}, checking all version exists...'.format(file_path))
-            assert os.path.exists(file_path)
+            assert os.path.exists(tmp_path):
+            os.rename(tmp_path, file_path)
+        except Exception as e:
+            print('Error downloading {}:{}'.format(file_path,str(e)))
+        assert os.path.exists(file_path)
