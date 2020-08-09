@@ -21,8 +21,21 @@ def correct_date(date):
     date_format = '%Y-%m-%d'
     if type(date)==str:
         date = '2020'+date[4:]
+        # If it's a date on the future we erase it, it's better nothing rather than bad information
+        if date > pd.to_datetime("today").strftime(DATE_FORMAT):
+            return math.nan
         return pd.to_datetime(date,format=date_format).replace(year=2020).strftime(DATE_FORMAT)
     return date
+
+def check_date(date):
+    """ This function could be used in case a bug occurs with the dates, to detect
+    in which dataset/column occurs """
+    try:
+        assert type(date)==str
+        assert date<=pd.to_datetime("today").strftime(DATE_FORMAT)
+    except Exception as e:
+        print(date)
+        assert False
 
 def comuna_lzero(department_str):
     if department_str.startswith('COMUNA 0'):
@@ -47,7 +60,8 @@ def get_data_cleared():
         CLASIFICACION,
         'cuidado_intensivo',
         FECHA_CUIDADO_INTENSIVO,
-        'carga_provincia_nombre'
+        'carga_provincia_nombre',
+        'fecha_apertura'
     ]
     df = df[cols]
 
@@ -56,14 +70,16 @@ def get_data_cleared():
     df['carga_provincia_nombre']=df['carga_provincia_nombre'].apply(normalize_str)
     df[CLASIFICACION]=df[CLASIFICACION].apply(normalize_str)
 
-
     df[FECHA_FIS]=df[FECHA_FIS].apply(correct_date)
-    df.loc[(df[PROVINCIA_RESIDENCIA]=='SIN ESPECIFICAR'),PROVINCIA_RESIDENCIA] =  df['carga_provincia_nombre']
-    df.loc[(df['fallecido']=='SI') & df['fecha_fallecimiento'].isna(),'fecha_fallecimiento'] =  df[FECHA_FIS]
-    df.loc[(df['fallecido']=='SI') & df[FECHA_FIS].isna(),FECHA_FIS] =  df['fecha_fallecimiento']
-    df.loc[(df['cuidado_intensivo']=='SI') & df[FECHA_CUIDADO_INTENSIVO].isna(),FECHA_CUIDADO_INTENSIVO] = df[FECHA_FIS]
     df['fecha_fallecimiento']=df['fecha_fallecimiento'].apply(correct_date)
     df[FECHA_CUIDADO_INTENSIVO]=df[FECHA_CUIDADO_INTENSIVO].apply(correct_date)
+
+    df.loc[(df[PROVINCIA_RESIDENCIA]=='SIN ESPECIFICAR'),PROVINCIA_RESIDENCIA] =  df['carga_provincia_nombre']
+    df.loc[(df['fallecido']=='SI') & df['fecha_fallecimiento'].isna(),'fecha_fallecimiento'] =  df[FECHA_FIS]
+    df.loc[(df['clasificacion_resumen']=='Confirmado') & df[FECHA_FIS].isna(),FECHA_FIS] =  df['fecha_apertura']
+    df.loc[(df['fallecido']=='SI') & df[FECHA_FIS].isna(),FECHA_FIS] =  df['fecha_fallecimiento']
+    df.loc[(df['cuidado_intensivo']=='SI') & df[FECHA_CUIDADO_INTENSIVO].isna(),FECHA_CUIDADO_INTENSIVO] = df[FECHA_FIS]
+
     df[DEPARTAMENTO_RESIDENCIA]=df[DEPARTAMENTO_RESIDENCIA].apply(comuna_lzero)
     df['LOCATION']='ARGENTINA/'+df[PROVINCIA_RESIDENCIA]+'/'+df[DEPARTAMENTO_RESIDENCIA]
     location_replace_dict = {
@@ -84,6 +100,7 @@ def pivot_time_series(df):
         no acumulativa. O sea, con indice LOCATION, columnas las diferentes
         fechas que aparecen y valor la cantidad de entradas que caen en dicha fecha. """
     df['value']=1
+    df['date'].apply(check_date)
     df = df.groupby(['LOCATION','date']).sum().reset_index()
     df = df.pivot_table(index=['LOCATION'], columns='date', values='value')
     df = df.fillna(0)

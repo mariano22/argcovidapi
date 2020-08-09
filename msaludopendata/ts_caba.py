@@ -16,6 +16,7 @@ import info_df
 """ Algunas definiciones de nombres de columnas para la tabla casos_covid19_caba de CABA. """
 FECHA_DE_CLASIFICACION = 'fecha_clasificacion'
 FECHA_DE_FALLECIMIENTO = 'fecha_fallecimiento'
+FECHA_DE_SNSV = 'fecha_apertura_snvs'
 CLASIFICACION = 'clasificacion'
 PROVINCIA = 'provincia'
 BARRIO = 'barrio'
@@ -36,7 +37,7 @@ def caba_date_to_iso(date):
         assert math.isnan(date)
         return date
     data_str = '2020-{}-{}'.format(MONTH_ABRR_TO_NUMBER[date[2:5]],date[0:2])
-    return pd.to_datetime(data_str,format=DATE_FORMAT)
+    return data_str
 
 def process_barrio(barrio):
     """ Normaliza el barrio agregando SIN ESPECIFIAR donde corresponda """
@@ -54,18 +55,22 @@ def get_data_cleared():
 
     df=df[df[PROVINCIA]=='CABA']
 
-    if is_date_weird( list(df[FECHA_DE_CLASIFICACION]) + list(df[FECHA_DE_FALLECIMIENTO]) ):
-        df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(caba_date_to_iso)
-        df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(caba_date_to_iso)
-    df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(ts_arg.correct_date)
-    df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(ts_arg.correct_date)
-
     df[PROVINCIA]=df[PROVINCIA].apply(normalize_str)
     df[BARRIO]=df[BARRIO].apply(process_barrio)
     df[CLASIFICACION]=df[CLASIFICACION].apply(normalize_str)
     df[COMUNA]=df[COMUNA].apply(lambda x : 'SIN ESPECIFICAR' if math.isnan(x) else 'COMUNA '+str(int(x)))
     # Los que no tienen barrio -> no tienen comuna especificada
     assert df[~df[COMUNA].isna() & df[BARRIO].isna()].empty
+
+    if is_date_weird( list(df[FECHA_DE_CLASIFICACION]) + list(df[FECHA_DE_FALLECIMIENTO]) + list(df[FECHA_DE_SNSV]) ):
+        df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(caba_date_to_iso)
+        df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(caba_date_to_iso)
+        df[FECHA_DE_SNSV] = df[FECHA_DE_SNSV].apply(caba_date_to_iso)
+    df[FECHA_DE_CLASIFICACION] = df[FECHA_DE_CLASIFICACION].apply(ts_arg.correct_date)
+    df[FECHA_DE_FALLECIMIENTO] = df[FECHA_DE_FALLECIMIENTO].apply(ts_arg.correct_date)
+    df[FECHA_DE_SNSV] = df[FECHA_DE_SNSV].apply(ts_arg.correct_date)
+
+    df.loc[(df[CLASIFICACION]=='CONFIRMADO') & df[FECHA_DE_CLASIFICACION].isna(),FECHA_DE_CLASIFICACION] =  df[FECHA_DE_SNSV]
 
     df['LOCATION']='ARGENTINA/CABA/'+df[BARRIO]
     return df
