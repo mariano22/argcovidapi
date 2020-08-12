@@ -22,7 +22,7 @@ PROVINCIA = 'provincia'
 BARRIO = 'barrio'
 COMUNA = 'comuna'
 
-MONTH_ABRR_TO_NUMBER = {v.upper(): k for k,v in enumerate(calendar.month_abbr)}
+MONTH_ABRR_TO_NUMBER = {v.upper(): (('0' if len(str(k))==1 else '')+str(k)) for k,v in enumerate(calendar.month_abbr)}
 def is_date_weird(dates):
     """ Dada una lista de fechas (strings) determina si están en formato 20APR2020:00:00:00.000000 """
     dates_set = set(dates)
