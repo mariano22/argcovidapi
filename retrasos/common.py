@@ -114,11 +114,14 @@ def format_history_df(df, analysed_date_column):
     df = df[df[analysed_date_column]>=oldest_csv_date].copy()
 
     to_concat = []
-    for name, gdf in df.groupby(['LOCATION',analysed_date_column]):
+    for name, gdf_original in df.groupby(['LOCATION',analysed_date_column]):
         location, date = name
         # No tiene sentido que algo sea reportado en un csv con fecha posterior al csv
         # Pero a veces existen errores, aunque no son demasiados
-        gdf = gdf[gdf[analysed_date_column]<=gdf['fecha_csv']].copy()
+        gdf = gdf_original[gdf_original[analysed_date_column]<=gdf_original['fecha_csv']].copy()
+        if gdf.empty:
+            print(gdf_original)
+            continue
 
         # Calculamos cuantos se sumaron diariamente a la columna ANALYSED_DATE_COLUMN en esa LOCATION
         gdf = gdf.sort_values('fecha_csv')
@@ -186,11 +189,11 @@ def delay_to_confident(df, analysed_date_column, value_ratio_threshold):
         to_concat.append(gdf)
     return pd.concat(to_concat,ignore_index=True)[['LOCATION', analysed_date_column, 'delay']]
 
-def delay_indicator(chdf, analysed_date_column):
+def delay_indicator(chdf, analysed_date_column, p1 = 0.95, p2 = 0.9):
     """ Para cada LOCATION calcula el indicador explicado en el informe.
         Devuelve la delay indicado y la ultima analysed_date_column que se considero confiable para calcular el delay. """
     last_csv_used = pd.to_datetime(max(chdf[analysed_date_column]),format='%Y-%m-%d')
-    percentiles_95 = delay_to_confident(chdf,analysed_date_column,0.95)
+    percentiles_95 = delay_to_confident(chdf,analysed_date_column,p1)
     fist_non_valid_by_location = dict()
     for location, gdf in percentiles_95.groupby('LOCATION'):
         gdf_filtered = gdf.copy()
@@ -205,7 +208,7 @@ def delay_indicator(chdf, analysed_date_column):
         else:
             fist_non_valid_by_location[location] = min(gdf_filtered[analysed_date_column])
 
-    percentiles_90 = delay_to_confident(chdf,analysed_date_column,0.90)
+    percentiles_90 = delay_to_confident(chdf,analysed_date_column,p2)
     to_concat = []
     for location, gdf in percentiles_90.groupby('LOCATION'):
         gdf = gdf[gdf[analysed_date_column]<fist_non_valid_by_location[location]]
