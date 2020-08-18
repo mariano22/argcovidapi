@@ -1,0 +1,8 @@
+# Instalar las dependencias (usa python >= 3.7)
+pip install -r requirements.txt
+
+# Correr programa genera casos_out.csv.
+# Disponer de los casos en casos.csv (ver formato de columnas en comentarios del codigo)
+python barrios_generator.py
+
+# Leer comentarios en barrios_generator.py para adaptar configuracion

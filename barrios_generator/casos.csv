@@ -1,0 +1,7 @@
+nombre,long,lat,fecha_fallecimiento,estado,fecha_diagnostico
+mariano,-60.657878,-32.939389,23/04/2020,confirmado,01/04/20
+unr,-60.628789,-32.959242,,descartado,
+juancito,-60.67058,-32.970014,,confirmado activo,02/07/20
+papa,-60.674094,-32.914492,,confirmado,05/08/20
+hijo,-60.661204,-32.955901,15/03/2020,confirmado,01/03/20
+cindy,-60.643635,-33.012153,,descartado,
