@@ -8,7 +8,7 @@ Santa Fe reports are cumulative. National reports shows new daily cases.
 
 We decided to work with cumulatives time series. There is a smart design decision behind that: if we have cumulative confirmed cases, we don't have to read all the entries, only with the frequentcy we are interested in (imagine weekly analysis).
 
-'Sospechosos' could decrease because some cases can move to 'Confirmados' o 'Descartados'.
+'Sospechosos' could decrease because some cases can move to 'Confirmados' or 'Descartados'.
 
 # Non-Python users
 
@@ -50,7 +50,7 @@ print('COVIDStats namedtuple:', COVIDStats._fields)
 
 
 ## Create api instance passing the working directory 
-When load the data the API tells if there are no entries in 'Info' sheet for certain city.
+When load the data, the API tells if there are no entries in 'Info' sheet for certain city.
 
 
 ```python
@@ -61,7 +61,7 @@ api = ArgentinaAPI('./')
 
 
 ### <code>get_stats : Date -> [ COVIDStats ]</code> of all provinces
-Date must be expressd in DD/MM format.
+Date must be expressed in DD/MM format.
 
 
 ```python
@@ -342,7 +342,7 @@ api = SantaFeAPI('./')
 
 
 ### <code>get_stats : Date -> [ COVIDStats ]</code> of all places
-Date must be expressd in DD/M/YYYY format.
+Date must be expressed in DD/M/YYYY format.
 
 
 ```python
@@ -584,7 +584,7 @@ print('Cities with the respective departments: {}'.format([(c,api.to_department[
 
 ### Example of use
 
-Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or deparment.
+Uses <code>is_city(str)</code> <code>is_deparment(str)</code> method to check if a place name is city or department.
 
 
 ```python
